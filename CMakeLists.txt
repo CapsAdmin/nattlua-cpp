@@ -41,6 +41,15 @@ gtest_discover_tests(tests)
 target_link_libraries(
     tests
     gtest_main
+    gcov
     lib
 )
+
+target_compile_options(tests
+    PUBLIC
+        "-O0"
+        "-fprofile-arcs"
+        "-ftest-coverage"
+    )
+
 #google test
