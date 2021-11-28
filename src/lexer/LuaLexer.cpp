@@ -3,7 +3,7 @@
 
 Token *LuaLexer::ReadSpace()
 {
-    if (!IsSpace(GetChar(0)))
+    if (!IsSpace(GetChar()))
     {
         return nullptr;
     }
@@ -12,7 +12,7 @@ Token *LuaLexer::ReadSpace()
     {
         Advance(1);
 
-        if (!IsSpace(GetChar(0)))
+        if (!IsSpace(GetChar()))
         {
             break;
         }
@@ -32,7 +32,7 @@ Token *LuaLexer::ReadLetter()
     {
         Advance(1);
 
-        if (!IsDuringLetter(GetChar(0)))
+        if (!IsDuringLetter(GetChar()))
         {
             break;
         }
@@ -72,7 +72,7 @@ Token *LuaLexer::ReadMultilineCComment()
         Advance(1);
     }
 
-    throw LexerException("tried to find end of multiline c comment, reached end of code", start, position);
+    throw LexerException("expected multiline C comment to end, reached end of code", start, position);
 }
 
 Token *LuaLexer::ReadLineComment()
@@ -156,13 +156,13 @@ Token *LuaLexer::ReadMultilineComment()
 
     if (pos2.has_value())
     {
-        position = pos + pos2.value() + closing.size();
+        position = pos2.value() + closing.size();
         return new Token(TokenType::MultilineComment);
     }
 
     position = start + 2;
 
-    throw LexerException("unclosed multiline comment", start, start + 1);
+    throw LexerException("expected multiline comment to end, reached end of code", start, start + 1);
 }
 
 Token *LuaLexer::ReadAnalyzerDebugCode()
@@ -220,12 +220,12 @@ bool ReadNumberExponent(LuaLexer &lexer, string what)
     }
     else
     {
-        throw LexerException("expected '+' or '-' after '" + what + "'", lexer.position - 1, lexer.position);
+        throw LexerException("expected + or - after " + what + ", got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 1, lexer.position);
     }
 
     if (!IsNumber(lexer.GetChar()))
     {
-        throw LexerException("malformed '" + what + "' expected number, got " + string(lexer.GetString(0, 1)), lexer.position - 2, lexer.position - 1);
+        throw LexerException("malformed '" + what + "' expected number, got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 2, lexer.position - 1);
     }
 
     while (!lexer.TheEnd())
@@ -280,7 +280,7 @@ Token *LuaLexer::ReadHexNumber()
                 break;
             }
 
-            throw LexerException("malformed hex number " + string(GetString(0, 1)) + " in hex notation", position - 1, position);
+            throw LexerException("malformed hex number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
@@ -322,7 +322,7 @@ Token *LuaLexer::ReadBinaryNumber()
                 break;
             }
 
-            throw LexerException("malformed binary number " + string(GetString(0, 1)) + " in binary notation", position - 1, position);
+            throw LexerException("malformed binary number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
@@ -378,7 +378,7 @@ Token *LuaLexer::ReadDecimalNumber()
                 break;
             }
 
-            throw LexerException("malformed decimal number " + string(GetString(0, 1)) + " in decimal notation", position - 1, position);
+            throw LexerException("malformed decimal number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
@@ -429,7 +429,7 @@ Token *LuaLexer::ReadMultilineString()
 
     if (!IsString("[", 0))
     {
-        throw LexerException("malformed multiline string, expected =", start, position);
+        throw LexerException("malformed multiline string: expected =, got " + string(GetStringRelative(0, 1)), start, position);
     }
 
     Advance(1);
@@ -441,11 +441,11 @@ Token *LuaLexer::ReadMultilineString()
 
     if (pos2.has_value())
     {
-        position = pos + pos2.value() + closing.size();
+        position = pos2.value() + closing.size();
         return new Token(TokenType::String);
     }
 
-    throw LexerException("expected multiline string reached end of code", start, position);
+    throw LexerException("expected multiline string to end, reached end of code", start, position);
 }
 
 Token *ReadQuotedString(LuaLexer &lexer, char quote)
@@ -477,7 +477,7 @@ Token *ReadQuotedString(LuaLexer &lexer, char quote)
         }
         else if (byte == '\n')
         {
-            throw LexerException("expected quote to end", start, lexer.position);
+            throw LexerException("expected ending " + string(1, quote) + " quote, got newline", start, lexer.position);
         }
         else if (byte == quote)
         {
@@ -485,7 +485,7 @@ Token *ReadQuotedString(LuaLexer &lexer, char quote)
         }
     }
 
-    throw LexerException("expected quote to end: reached end of file", start, lexer.position - 1);
+    throw LexerException("expected ending " + string(1, quote) + " quote, reached end of code", start, lexer.position - 1);
 }
 
 Token *LuaLexer::ReadSingleQuotedString()

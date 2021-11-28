@@ -6,9 +6,14 @@ string_view BaseLexer::GetString(size_t start, size_t stop)
     return code->GetString(start, stop);
 }
 
+string_view BaseLexer::GetStringRelative(size_t start, size_t stop)
+{
+    return code->GetString(position + start, position + stop);
+}
+
 uint8_t BaseLexer::GetChar(size_t offset)
 {
-    return code->GetChar(offset);
+    return code->GetChar(position + offset);
 }
 bool BaseLexer::IsString(string value, size_t relative_offset)
 {
@@ -147,13 +152,13 @@ Token *BaseLexer::ReadSingleToken()
 
     if (auto res = ReadShebang())
         token = res;
+    else if (auto res = ReadEndOfFile())
+        token = res;
     else if (auto res = ReadRemainingCommentEscape())
         token = res;
     else if (auto res = ReadWhitespaceToken())
         token = res;
     else if (auto res = ReadNonWhitespaceToken())
-        token = res;
-    else if (auto res = ReadEndOfFile())
         token = res;
     else if (auto res = ReadUnknown())
         token = res;
@@ -206,6 +211,8 @@ pair<vector<Token *>, vector<LexerException>> BaseLexer::GetTokens()
         {
 
             auto token = ReadToken();
+
+            tokens.push_back(token);
 
             if (token->kind == TokenType::EndOfFile)
             {

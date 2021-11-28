@@ -13,7 +13,7 @@ private:
     string name;
 
 public:
-    Code(string buffer, string name);
+    Code(string_view buffer, string name);
     ~Code();
     size_t GetSize();
     string_view GetString(size_t start, size_t end);

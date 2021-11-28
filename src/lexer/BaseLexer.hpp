@@ -52,6 +52,7 @@ public:
     pair<vector<Token *>, vector<LexerException>> GetTokens();
 
     string_view GetString(size_t start, size_t stop);
+    string_view GetStringRelative(size_t start, size_t stop);
     uint8_t GetChar(size_t offset = 0);
     bool IsString(string value, size_t relative_offset = 0);
     void ResetState();

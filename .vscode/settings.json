@@ -68,5 +68,6 @@
         "{FILE}.c",
         "{FILE}.inl",
         "/src/{FILE}.cpp"
-    ]
+    ],
+    "cmake.configureSettings": { "gtest_build_samples": "ON" }
 }

@@ -1,6 +1,6 @@
 #include "./Code.hpp"
 
-Code::Code(string buffer, string name)
+Code::Code(string_view buffer, string name)
 {
     this->buffer = buffer;
     this->name = name;
@@ -30,5 +30,8 @@ optional<size_t> Code::FindNearest(string pattern, size_t from)
 
 uint8_t Code::GetChar(size_t index)
 {
+    if (index >= buffer.size())
+        return 0;
+
     return buffer.at(index);
 }
