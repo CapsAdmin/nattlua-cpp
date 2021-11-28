@@ -38,15 +38,8 @@ public:
     void AddPrefixOperatorTranslation(map<string, string> map);
     void AddPostfixOperatorTranslation(map<string, string> map);
     void AddNumberAnnotation(vector<string> vec);
-    static bool IsValidHex(uint8_t c);
-    static bool IsLetter(uint8_t c);
-    static bool IsDuringLetter(uint8_t c);
-    static bool IsNumber(uint8_t c);
-    static bool IsSpace(uint8_t c);
-    static bool IsSymbol(uint8_t c);
 
 private:
     void AddSymbols(vector<string> strings);
-
     void AddBinarySymbols(vector<string> strings);
 };

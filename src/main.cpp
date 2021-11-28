@@ -1,11 +1,11 @@
 #include <iostream>
-#include "syntax/runtime.hpp"
+#include "syntax/RuntimeSyntax.hpp"
+
+void RunTokenizerTests();
 
 int main(int, char **)
 {
-    RuntimeSyntax *runtime = new RuntimeSyntax();
-
-    printf("hello\n");
+    RunTokenizerTests();
 
     return 0;
 }

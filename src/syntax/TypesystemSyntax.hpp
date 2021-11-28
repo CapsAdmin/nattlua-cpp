@@ -1,8 +1,9 @@
 #pragma once
-#include "./runtime.hpp"
+#include "./RuntimeSyntax.hpp"
 
 class TypesystemSyntax : public RuntimeSyntax
 {
+public:
     TypesystemSyntax() : RuntimeSyntax()
     {
         AddPrefixOperators({"-",
@@ -34,4 +35,5 @@ class TypesystemSyntax : public RuntimeSyntax
                             {"*", "/", "/idiv/", "%"},
                             {"R^"}});
     }
+    ~TypesystemSyntax() {}
 };

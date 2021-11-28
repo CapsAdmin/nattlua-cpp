@@ -1,5 +1,5 @@
 #pragma once
-#include "./base.hpp"
+#include "./BaseSyntax.hpp"
 
 class RuntimeSyntax : public BaseSyntax
 {
@@ -88,4 +88,5 @@ public:
                             {"*", "/", "/idiv/", "%"},
                             {"R^"}});
     }
+    ~RuntimeSyntax() {}
 };

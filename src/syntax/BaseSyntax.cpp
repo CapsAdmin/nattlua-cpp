@@ -1,5 +1,5 @@
 
-#include "./base.hpp"
+#include "./BaseSyntax.hpp"
 
 using namespace std;
 
@@ -129,48 +129,6 @@ void BaseSyntax::AddPostfixOperatorTranslation(map<string, string> map)
 void BaseSyntax::AddNumberAnnotation(vector<string> vec)
 {
     number_annotations.insert(number_annotations.end(), vec.begin(), vec.end());
-}
-
-bool BaseSyntax::IsValidHex(uint8_t c)
-{
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-}
-
-bool BaseSyntax::IsLetter(uint8_t c)
-{
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-           c == '_' || c == '@' || c >= 127;
-}
-
-bool BaseSyntax::IsDuringLetter(uint8_t c)
-{
-    return (
-        (c >= 'a' && c <= 'z') ||
-        (c >= '0' && c <= '9') ||
-        (c >= 'A' && c <= 'Z') ||
-        c == '_' ||
-        c == '@' ||
-        c >= 127);
-}
-
-bool BaseSyntax::IsNumber(uint8_t c)
-{
-    return c >= '0' && c <= '9';
-}
-
-bool BaseSyntax::IsSpace(uint8_t c)
-{
-    return c > 0 && c <= 32;
-}
-
-bool BaseSyntax::IsSymbol(uint8_t c)
-{
-    return (
-        c != '_' &&
-        ((c >= '!' && c <= '/') ||
-         (c >= ':' && c <= '?') ||
-         (c >= '[' && c <= '`') ||
-         (c >= '{' && c <= '~')));
 }
 
 void BaseSyntax::AddSymbols(vector<string> strings)
