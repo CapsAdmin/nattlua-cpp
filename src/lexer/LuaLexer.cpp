@@ -373,16 +373,12 @@ Token *ReadQuotedString(LuaLexer &lexer, char quote)
     {
         auto byte = lexer.ReadByte();
 
-        if (byte == '\\')
+        if (byte == '\\' && lexer.IsString("z"))
         {
-            auto byte = lexer.ReadByte();
+            // skip past \z
+            lexer.position += 1;
 
-            if (byte == 'z' && lexer.GetByte() != quote)
-            {
-                // TODO: space is lost
-                if (lexer.ReadSpace() == nullptr)
-                    return nullptr;
-            }
+            lexer.ReadSpace();
         }
         else if (byte == '\n')
         {

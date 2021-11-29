@@ -88,6 +88,8 @@ TEST(Lexer, SingleQuoteString)
 TEST(Lexer, ZEscapedString)
 {
     EXPECT_EQ(OneToken(Tokenize("\"a\\z\na\""))->kind, TokenType::String);
+    EXPECT_EQ(OneToken(Tokenize("\"a\\z\n\n   \na\""))->kind, TokenType::String);
+    ExpectError("\"a\\z\n\n--foo  \na\"", "expected ending \" quote, got newline");
 }
 
 TEST(Lexer, NumberRange)
