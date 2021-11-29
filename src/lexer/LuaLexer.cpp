@@ -228,11 +228,15 @@ Token *LuaLexer::ReadHexNumber()
         }
         else
         {
+            // a number is ok to end with space or symbol
             if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
 
-            if ((IsString("p") || IsString("P")) && ReadNumberExponent(*this, "pow"))
-                break;
+            if (IsString("p") || IsString("P"))
+            {
+                if (ReadNumberExponent(*this, "pow"))
+                    break;
+            }
 
             throw LexerException("malformed hex number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
@@ -265,8 +269,11 @@ Token *LuaLexer::ReadBinaryNumber()
             if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
 
-            if ((IsString("p") || IsString("P")) && ReadNumberExponent(*this, "pow"))
-                break;
+            if (IsString("e") || IsString("E"))
+            {
+                if (ReadNumberExponent(*this, "exponent"))
+                    break;
+            }
 
             throw LexerException("malformed binary number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
@@ -282,8 +289,9 @@ Token *LuaLexer::ReadDecimalNumber()
     if (!IsNumber(GetByte()) && (!IsString(".") || !IsNumber(GetByte(1))))
         return nullptr;
 
+    // if we start with a dot
+    // .0
     auto has_dot = false;
-
     if (IsString("."))
     {
         has_dot = true;
@@ -297,6 +305,8 @@ Token *LuaLexer::ReadDecimalNumber()
 
         if (!has_dot && IsString("."))
         {
+            // 22..66 would be a number range
+            // so we have to return 22 only
             if (IsString(".", 1))
                 break;
 
@@ -313,8 +323,11 @@ Token *LuaLexer::ReadDecimalNumber()
             if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
 
-            if ((IsString("e") || IsString("E")) && ReadNumberExponent(*this, "exponent"))
-                break;
+            if (IsString("e") || IsString("E"))
+            {
+                if (ReadNumberExponent(*this, "exponent"))
+                    break;
+            }
 
             throw LexerException("malformed decimal number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
