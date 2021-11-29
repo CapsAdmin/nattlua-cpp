@@ -1,23 +1,23 @@
 #include "./BaseLexer.hpp"
 #include "../code/Code.hpp"
 
-string_view BaseLexer::GetString(size_t start, size_t stop)
+string_view BaseLexer::GetStringSlice(size_t start, size_t stop)
 {
-    return code->GetString(start, stop);
+    return code->GetStringSlice(start, stop);
 }
 
 string_view BaseLexer::GetStringRelative(size_t start, size_t stop)
 {
-    return code->GetString(position + start, position + stop);
+    return code->GetStringSlice(position + start, position + stop);
 }
 
-uint8_t BaseLexer::GetChar(size_t offset)
+uint8_t BaseLexer::GetByte(size_t offset)
 {
-    return code->GetChar(position + offset);
+    return code->GetByte(position + offset);
 }
-bool BaseLexer::IsString(string value, size_t relative_offset)
+bool BaseLexer::IsString(const string value, const size_t relative_offset)
 {
-    auto l = GetString(position + relative_offset, position + relative_offset + value.size());
+    auto l = GetStringSlice(position + relative_offset, position + relative_offset + value.size());
 
     return l == value;
 }
@@ -33,44 +33,38 @@ optional<size_t> BaseLexer::FindNearest(string pattern)
     return code->FindNearest(pattern, position);
 }
 
-void BaseLexer::Advance(size_t offset)
+uint8_t BaseLexer::ReadByte()
 {
-    position += offset;
-}
-
-uint8_t BaseLexer::ReadChar()
-{
-    auto byte = GetChar(0);
-    Advance(1);
+    auto byte = GetByte();
+    position += 1;
     return byte;
 }
 
 bool BaseLexer::TheEnd()
 {
-    return position >= code->GetSize();
+    return position >= code->GetByteSize();
 }
 
-bool BaseLexer::ReadFromArray(vector<string> array)
+bool BaseLexer::ReadFirstFromStringArray(vector<string> array)
 {
-    for (auto &s : array)
+    for (auto &str : array)
     {
-        if (IsString(s, 0))
+        if (IsString(str))
         {
-            Advance(s.size());
+            position += str.size();
             return true;
         }
     }
+
     return false;
 }
 
 Token *BaseLexer::ReadCommentEscape()
 {
-    if (!IsString("--[[#", 0))
-    {
+    if (!IsString("--[[#"))
         return nullptr;
-    }
 
-    Advance(5);
+    position += 5;
     comment_escape = true;
 
     return new Token(TokenType::CommentEscape);
@@ -78,12 +72,10 @@ Token *BaseLexer::ReadCommentEscape()
 
 Token *BaseLexer::ReadRemainingCommentEscape()
 {
-    if (!comment_escape || IsString("]]", 0))
-    {
+    if (!comment_escape || IsString("]]"))
         return nullptr;
-    }
 
-    Advance(2);
+    position += 2;
     comment_escape = false;
 
     return new Token(TokenType::CommentEscape);
@@ -92,16 +84,14 @@ Token *BaseLexer::ReadRemainingCommentEscape()
 Token *BaseLexer::ReadEndOfFile()
 {
     if (!TheEnd())
-    {
         return nullptr;
-    }
 
     return new Token(TokenType::EndOfFile);
 }
 
 Token *BaseLexer::ReadUnknown()
 {
-    Advance(1);
+    position += 1;
 
     return new Token(TokenType::Unknown);
 }
@@ -113,7 +103,7 @@ Token *BaseLexer::ReadUnknown()
         }
 
         while !self.the_end() {
-            self.advance(1);
+            self.position += 1;
 
             if self.is_string("\n", 0) {
                 break;
@@ -127,18 +117,14 @@ Token *BaseLexer::ReadUnknown()
 Token *BaseLexer::ReadShebang()
 {
     if (position != 0 || !IsString("#", 0))
-    {
         return nullptr;
-    }
 
     while (!TheEnd())
     {
-        Advance(1);
+        position += 1;
 
         if (IsString("\n", 0))
-        {
             break;
-        }
     }
 
     return new Token(TokenType::Shebang);
@@ -185,10 +171,10 @@ Token *BaseLexer::ReadToken()
         {
             for (auto &token : whitespace_tokens)
             {
-                token->value = GetString(token->start, token->stop);
+                token->value = GetStringSlice(token->start, token->stop);
             }
 
-            token->value = GetString(token->start, token->stop);
+            token->value = GetStringSlice(token->start, token->stop);
             token->whitespace = whitespace_tokens;
 
             whitespace_tokens.clear();
@@ -209,7 +195,6 @@ pair<vector<Token *>, vector<LexerException>> BaseLexer::GetTokens()
     {
         try
         {
-
             auto token = ReadToken();
 
             tokens.push_back(token);

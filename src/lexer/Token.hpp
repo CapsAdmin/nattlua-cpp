@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-enum TokenType
+enum TokenType : uint8_t
 {
     AnalyzerDebugCode,
     ParserDebugCode,

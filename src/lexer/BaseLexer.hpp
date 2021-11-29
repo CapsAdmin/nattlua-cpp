@@ -51,14 +51,13 @@ public:
     Token *ReadSingleToken();
     pair<vector<Token *>, vector<LexerException>> GetTokens();
 
-    string_view GetString(size_t start, size_t stop);
+    string_view GetStringSlice(size_t start, size_t stop);
     string_view GetStringRelative(size_t start, size_t stop);
-    uint8_t GetChar(size_t offset = 0);
-    bool IsString(string value, size_t relative_offset = 0);
+    uint8_t GetByte(size_t offset = 0);
+    bool IsString(const string value, const size_t relative_offset = 0);
     void ResetState();
     optional<size_t> FindNearest(string pattern);
-    void Advance(size_t offset);
-    uint8_t ReadChar();
+    uint8_t ReadByte();
     bool TheEnd();
-    bool ReadFromArray(vector<string> array);
+    bool ReadFirstFromStringArray(vector<string> array);
 };

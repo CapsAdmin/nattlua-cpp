@@ -20,7 +20,6 @@ public:
     Token *ReadMultilineCComment();
     Token *ReadLineComment();
     Token *ReadParserDebugCode();
-    Token *ReadNumber();
     Token *ReadHexNumber();
     Token *ReadBinaryNumber();
     Token *ReadDecimalNumber();

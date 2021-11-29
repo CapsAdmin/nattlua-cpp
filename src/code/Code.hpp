@@ -15,8 +15,8 @@ private:
 public:
     Code(string_view buffer, string name);
     ~Code();
-    size_t GetSize();
-    string_view GetString(size_t start, size_t end);
+    size_t GetByteSize();
+    string_view GetStringSlice(size_t start, size_t end);
     optional<size_t> FindNearest(string pattern, size_t from);
-    uint8_t GetChar(size_t index);
+    uint8_t GetByte(size_t index);
 };

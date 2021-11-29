@@ -3,19 +3,15 @@
 
 Token *LuaLexer::ReadSpace()
 {
-    if (!IsSpace(GetChar()))
-    {
+    if (!IsSpace(GetByte()))
         return nullptr;
-    }
 
     while (!TheEnd())
     {
-        Advance(1);
+        position += 1;
 
-        if (!IsSpace(GetChar()))
-        {
+        if (!IsSpace(GetByte()))
             break;
-        }
     }
 
     return new Token(TokenType::Space);
@@ -23,19 +19,15 @@ Token *LuaLexer::ReadSpace()
 
 Token *LuaLexer::ReadLetter()
 {
-    if (!IsLetter(GetChar()))
-    {
+    if (!IsLetter(GetByte()))
         return nullptr;
-    }
 
     while (!TheEnd())
     {
-        Advance(1);
+        position += 1;
 
-        if (!IsDuringLetter(GetChar()))
-        {
+        if (!IsDuringLetter(GetByte()))
             break;
-        }
     }
 
     return new Token(TokenType::Letter);
@@ -43,10 +35,8 @@ Token *LuaLexer::ReadLetter()
 
 Token *LuaLexer::ReadSymbol()
 {
-    if (!ReadFromArray(runtime_syntax->symbols) && !ReadFromArray(typesystem_syntax->symbols))
-    {
+    if (!ReadFirstFromStringArray(runtime_syntax->symbols) && !ReadFirstFromStringArray(typesystem_syntax->symbols))
         return nullptr;
-    }
 
     return new Token(TokenType::Symbol);
 }
@@ -54,22 +44,20 @@ Token *LuaLexer::ReadSymbol()
 Token *LuaLexer::ReadMultilineCComment()
 {
     if (!IsString("/*"))
-    {
         return nullptr;
-    }
 
     auto start = position;
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("*/"))
         {
-            Advance(2);
+            position += 2;
             return new Token(TokenType::MultilineComment);
         }
 
-        Advance(1);
+        position += 1;
     }
 
     throw LexerException("expected multiline C comment to end, reached end of code", start, position);
@@ -78,20 +66,16 @@ Token *LuaLexer::ReadMultilineCComment()
 Token *LuaLexer::ReadLineComment()
 {
     if (!IsString("--"))
-    {
         return nullptr;
-    }
 
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("\n"))
-        {
             break;
-        }
 
-        Advance(1);
+        position += 1;
     }
 
     return new Token(TokenType::LineComment);
@@ -100,20 +84,16 @@ Token *LuaLexer::ReadLineComment()
 Token *LuaLexer::ReadLineCComment()
 {
     if (!IsString("//"))
-    {
         return nullptr;
-    }
 
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("\n"))
-        {
             break;
-        }
 
-        Advance(1);
+        position += 1;
     }
 
     return new Token(TokenType::LineComment);
@@ -129,17 +109,16 @@ std::string repeat(const std::string &input, size_t num)
 Token *LuaLexer::ReadMultilineComment()
 {
     if (!IsString("--[") || (!IsString("[", 3) && !IsString("=", 3)))
-    {
         return nullptr;
-    }
 
     auto start = position;
-    Advance(3);
 
+    // skip the --[
+    position += 3;
+
+    // skip all the =
     while (IsString("="))
-    {
-        Advance(1);
-    }
+        position += 1;
 
     // if we have an incomplete multiline comment, it's just a single line comment
     if (!IsString("["))
@@ -148,7 +127,8 @@ Token *LuaLexer::ReadMultilineComment()
         return ReadLineComment();
     }
 
-    Advance(1);
+    // skip the last [
+    position += 1;
     auto pos = position;
 
     auto closing = string("]" + repeat("=", pos - start - 4) + "]");
@@ -168,20 +148,16 @@ Token *LuaLexer::ReadMultilineComment()
 Token *LuaLexer::ReadAnalyzerDebugCode()
 {
     if (!IsString("§"))
-    {
         return nullptr;
-    }
 
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("\n"))
-        {
             break;
-        }
 
-        Advance(1);
+        position += 1;
     }
 
     return new Token(TokenType::AnalyzerDebugCode);
@@ -190,20 +166,16 @@ Token *LuaLexer::ReadAnalyzerDebugCode()
 Token *LuaLexer::ReadParserDebugCode()
 {
     if (!IsString("£"))
-    {
         return nullptr;
-    }
 
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("\n"))
-        {
             break;
-        }
 
-        Advance(1);
+        position += 1;
     }
 
     return new Token(TokenType::ParserDebugCode);
@@ -212,30 +184,23 @@ Token *LuaLexer::ReadParserDebugCode()
 bool ReadNumberExponent(LuaLexer &lexer, string what)
 {
     // skip the 'e', 'E', 'p' or 'P'
-    lexer.Advance(1);
+    lexer.position += 1;
 
-    if (lexer.IsString("+") || lexer.IsString("-"))
-    {
-        lexer.Advance(1);
-    }
-    else
-    {
+    if (!lexer.IsString("+") && !lexer.IsString("-"))
         throw LexerException("expected + or - after " + what + ", got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 1, lexer.position);
-    }
 
-    if (!IsNumber(lexer.GetChar()))
-    {
+    // skip the '+' or '-'
+    lexer.position += 1;
+
+    if (!IsNumber(lexer.GetByte()))
         throw LexerException("malformed '" + what + "' expected number, got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 2, lexer.position - 1);
-    }
 
     while (!lexer.TheEnd())
     {
-        if (!IsNumber(lexer.GetChar()))
-        {
+        if (!IsNumber(lexer.GetByte()))
             break;
-        }
 
-        lexer.Advance(1);
+        lexer.position += 1;
     }
 
     return true;
@@ -244,47 +209,36 @@ bool ReadNumberExponent(LuaLexer &lexer, string what)
 Token *LuaLexer::ReadHexNumber()
 {
     if (!IsString("0") || (!IsString("x", 1) && !IsString("X", 1)))
-    {
         return nullptr;
-    }
 
     // skip past 0x
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("_"))
-        {
-            Advance(1);
-        }
+            position += 1;
 
         if (IsString(".") && !IsString(".", 1))
-        {
-            Advance(1);
-        }
+            position += 1;
 
-        if (IsValidHex(GetChar()))
+        if (IsValidHex(GetByte()))
         {
-            Advance(1);
+            position += 1;
         }
         else
         {
-
-            if (IsSpace(GetChar()) || IsSymbol(GetChar()))
-            {
+            if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
-            }
 
             if ((IsString("p") || IsString("P")) && ReadNumberExponent(*this, "pow"))
-            {
                 break;
-            }
 
             throw LexerException("malformed hex number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
-    ReadFromArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->number_annotations);
 
     return new Token(TokenType::Number);
 }
@@ -292,148 +246,107 @@ Token *LuaLexer::ReadHexNumber()
 Token *LuaLexer::ReadBinaryNumber()
 {
     if (!IsString("0") || (!IsString("b", 1) && !IsString("B", 1)))
-    {
         return nullptr;
-    }
 
     // skip past 0b
-    Advance(2);
+    position += 2;
 
     while (!TheEnd())
     {
         if (IsString("_"))
-        {
-            Advance(1);
-        }
+            position += 1;
 
         if (IsString("1") || IsString("0"))
         {
-            Advance(1);
+            position += 1;
         }
         else
         {
-            if (IsSpace(GetChar()) || IsSymbol(GetChar()))
-            {
+            if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
-            }
 
             if ((IsString("p") || IsString("P")) && ReadNumberExponent(*this, "pow"))
-            {
                 break;
-            }
 
             throw LexerException("malformed binary number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
-    ReadFromArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->number_annotations);
 
     return new Token(TokenType::Number);
 }
 
 Token *LuaLexer::ReadDecimalNumber()
 {
-    if (!IsNumber(GetChar()) && (!IsString(".") || !IsNumber(GetChar(1))))
-    {
+    if (!IsNumber(GetByte()) && (!IsString(".") || !IsNumber(GetByte(1))))
         return nullptr;
-    }
 
     auto has_dot = false;
+
     if (IsString("."))
     {
         has_dot = true;
-        Advance(1);
+        position += 1;
     }
 
     while (!TheEnd())
     {
         if (IsString("_"))
-        {
-            Advance(1);
-        }
+            position += 1;
 
         if (!has_dot && IsString("."))
         {
             if (IsString(".", 1))
-            {
                 break;
-            }
+
             has_dot = true;
-            Advance(1);
+            position += 1;
         }
 
-        if (IsNumber(GetChar()))
+        if (IsNumber(GetByte()))
         {
-            Advance(1);
+            position += 1;
         }
         else
         {
-            if (IsSpace(GetChar()) || IsSymbol(GetChar()))
-            {
+            if (IsSpace(GetByte()) || IsSymbol(GetByte()))
                 break;
-            }
 
             if ((IsString("e") || IsString("E")) && ReadNumberExponent(*this, "exponent"))
-            {
                 break;
-            }
 
             throw LexerException("malformed decimal number, got " + string(GetStringRelative(0, 1)), position - 1, position);
         }
     }
 
-    ReadFromArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->number_annotations);
 
     return new Token(TokenType::Number);
-}
-
-Token *LuaLexer::ReadNumber()
-{
-    if (auto res = ReadHexNumber())
-    {
-        return res;
-    }
-    if (auto res = ReadBinaryNumber())
-    {
-        return res;
-    }
-    if (auto res = ReadDecimalNumber())
-    {
-        return res;
-    }
-
-    return nullptr;
 }
 
 Token *LuaLexer::ReadMultilineString()
 {
     if (!IsString("[", 0) || (!IsString("[", 1) && !IsString("=", 1)))
-    {
         return nullptr;
-    }
 
     auto start = position;
-    Advance(1);
+    position += 1;
 
     if (IsString("=", 0))
     {
         while (!TheEnd())
         {
-            Advance(1);
+            position += 1;
             if (!IsString("=", 0))
-            {
                 break;
-            }
         }
     }
 
     if (!IsString("[", 0))
-    {
         throw LexerException("malformed multiline string: expected =, got " + string(GetStringRelative(0, 1)), start, position);
-    }
 
-    Advance(1);
-
+    position += 1;
     auto pos = position;
 
     auto closing = string("]" + repeat("=", pos - start - 2) + "]");
@@ -450,29 +363,25 @@ Token *LuaLexer::ReadMultilineString()
 
 Token *ReadQuotedString(LuaLexer &lexer, char quote)
 {
-    if (lexer.GetChar() != quote)
-    {
+    if (lexer.GetByte() != quote)
         return nullptr;
-    }
 
     auto start = lexer.position;
-    lexer.Advance(1);
+    lexer.position += 1;
 
     while (!lexer.TheEnd())
     {
-        auto byte = lexer.ReadChar();
+        auto byte = lexer.ReadByte();
 
         if (byte == '\\')
         {
-            auto byte = lexer.ReadChar();
+            auto byte = lexer.ReadByte();
 
-            if (byte == 'z' && lexer.GetChar() != quote)
+            if (byte == 'z' && lexer.GetByte() != quote)
             {
                 // TODO: space is lost
                 if (lexer.ReadSpace() == nullptr)
-                {
                     return nullptr;
-                }
             }
         }
         else if (byte == '\n')
@@ -501,66 +410,57 @@ Token *LuaLexer::ReadDoubleQuotedString()
 Token *LuaLexer::ReadNonWhitespaceToken()
 {
     if (auto res = ReadAnalyzerDebugCode())
-    {
         return res;
-    }
+
     if (auto res = ReadParserDebugCode())
-    {
         return res;
-    }
-    if (auto res = ReadNumber())
-    {
+
+    if (auto res = ReadHexNumber())
         return res;
-    }
+
+    if (auto res = ReadBinaryNumber())
+        return res;
+
+    if (auto res = ReadDecimalNumber())
+        return res;
+
     if (auto res = ReadMultilineString())
-    {
         return res;
-    }
+
     if (auto res = ReadSingleQuotedString())
-    {
         return res;
-    }
+
     if (auto res = ReadDoubleQuotedString())
-    {
         return res;
-    }
+
     if (auto res = ReadLetter())
-    {
         return res;
-    }
+
     if (auto res = ReadSymbol())
-    {
         return res;
-    }
+
     return nullptr;
 }
 
 Token *LuaLexer::ReadWhitespaceToken()
 {
     if (auto res = ReadSpace())
-    {
         return res;
-    }
+
     if (auto res = ReadCommentEscape())
-    {
         return res;
-    }
+
     if (auto res = ReadMultilineCComment())
-    {
         return res;
-    }
+
     if (auto res = ReadLineCComment())
-    {
         return res;
-    }
+
     if (auto res = ReadMultilineComment())
-    {
         return res;
-    }
+
     if (auto res = ReadLineComment())
-    {
         return res;
-    }
 
     return nullptr;
 }

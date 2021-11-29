@@ -8,12 +8,12 @@ Code::Code(string_view buffer, string name)
 
 Code::~Code(){};
 
-size_t Code::GetSize()
+size_t Code::GetByteSize()
 {
     return buffer.size();
 }
 
-string_view Code::GetString(size_t start, size_t end)
+string_view Code::GetStringSlice(size_t start, size_t end)
 {
     return buffer.substr(start, end - start);
 }
@@ -28,7 +28,7 @@ optional<size_t> Code::FindNearest(string pattern, size_t from)
     return pos;
 }
 
-uint8_t Code::GetChar(size_t index)
+uint8_t Code::GetByte(size_t index)
 {
     if (index >= buffer.size())
         return 0;
