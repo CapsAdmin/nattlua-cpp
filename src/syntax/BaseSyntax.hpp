@@ -15,17 +15,8 @@ struct BinaryOperatorInfo
 
 class BaseSyntax
 {
-public:
-    vector<string> symbols;
-    vector<string> number_annotations;
-    map<string, vector<string>> lookup;
-    map<string, BinaryOperatorInfo> binary_operator_info;
-    set<string> primary_binary_operators_lookup;
-    set<string> postfix_operators_lookup;
-    set<string> keyword_values_lookup;
-    set<string> keyword_lookup;
-    set<string> non_standard_keyword_lookup;
 
+public:
     void AddPrefixOperators(vector<string> vec);
     void AddPostfixOperators(vector<string> vec);
     void AddPrimaryBinaryOperators(vector<string> vec);
@@ -39,7 +30,20 @@ public:
     void AddPostfixOperatorTranslation(map<string, string> map);
     void AddNumberAnnotation(vector<string> vec);
 
+    auto GetSymbols() { return symbols; }
+    auto GetNumberAnnotations() { return number_annotations; }
+
 private:
+    vector<string> symbols;
+    vector<string> number_annotations;
+    map<string, vector<string>> lookup;
+    map<string, BinaryOperatorInfo> binary_operator_info;
+    set<string> primary_binary_operators_lookup;
+    set<string> postfix_operators_lookup;
+    set<string> keyword_values_lookup;
+    set<string> keyword_lookup;
+    set<string> non_standard_keyword_lookup;
+
     void AddSymbols(vector<string> strings);
     void AddBinarySymbols(vector<string> strings);
 };

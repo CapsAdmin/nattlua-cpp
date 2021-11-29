@@ -35,9 +35,8 @@ class BaseLexer
 public:
     Code *code;
     size_t position = 0;
-    bool comment_escape = false;
-    RuntimeSyntax *runtime_syntax = nullptr;
-    TypesystemSyntax *typesystem_syntax = nullptr;
+    RuntimeSyntax *runtime_syntax = new RuntimeSyntax();
+    TypesystemSyntax *typesystem_syntax = new TypesystemSyntax();
 
     virtual Token *ReadNonWhitespaceToken() = 0;
     virtual Token *ReadWhitespaceToken() = 0;
@@ -48,11 +47,9 @@ public:
     Token *ReadEndOfFile();
     Token *ReadCommentEscape();
     Token *ReadRemainingCommentEscape();
-    Token *ReadSingleToken();
     pair<vector<Token *>, vector<LexerException>> GetTokens();
 
-    string_view GetStringSlice(size_t start, size_t stop);
-    string_view GetStringRelative(size_t start, size_t stop);
+    string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);
     bool IsString(const string value, const size_t relative_offset = 0);
     void ResetState();
@@ -60,4 +57,8 @@ public:
     uint8_t ReadByte();
     bool TheEnd();
     bool ReadFirstFromStringArray(vector<string> array);
+
+private:
+    bool comment_escape = false;
+    Token *ReadSingleToken();
 };

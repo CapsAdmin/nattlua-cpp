@@ -35,7 +35,7 @@ Token *LuaLexer::ReadLetter()
 
 Token *LuaLexer::ReadSymbol()
 {
-    if (!ReadFirstFromStringArray(runtime_syntax->symbols) && !ReadFirstFromStringArray(typesystem_syntax->symbols))
+    if (!ReadFirstFromStringArray(runtime_syntax->GetSymbols()) && !ReadFirstFromStringArray(typesystem_syntax->GetSymbols()))
         return nullptr;
 
     return new Token(TokenType::Symbol);
@@ -187,13 +187,13 @@ bool ReadNumberExponent(LuaLexer &lexer, string what)
     lexer.position += 1;
 
     if (!lexer.IsString("+") && !lexer.IsString("-"))
-        throw LexerException("expected + or - after " + what + ", got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 1, lexer.position);
+        throw LexerException("expected + or - after " + what + ", got " + string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 1, lexer.position);
 
     // skip the '+' or '-'
     lexer.position += 1;
 
     if (!IsNumber(lexer.GetByte()))
-        throw LexerException("malformed '" + what + "' expected number, got " + string(lexer.GetStringRelative(0, 1)), lexer.position - 2, lexer.position - 1);
+        throw LexerException("malformed '" + what + "' expected number, got " + string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 2, lexer.position - 1);
 
     while (!lexer.TheEnd())
     {
@@ -238,11 +238,11 @@ Token *LuaLexer::ReadHexNumber()
                     break;
             }
 
-            throw LexerException("malformed hex number, got " + string(GetStringRelative(0, 1)), position - 1, position);
+            throw LexerException("malformed hex number, got " + string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
-    ReadFirstFromStringArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
     return new Token(TokenType::Number);
 }
@@ -275,11 +275,11 @@ Token *LuaLexer::ReadBinaryNumber()
                     break;
             }
 
-            throw LexerException("malformed binary number, got " + string(GetStringRelative(0, 1)), position - 1, position);
+            throw LexerException("malformed binary number, got " + string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
-    ReadFirstFromStringArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
     return new Token(TokenType::Number);
 }
@@ -329,11 +329,11 @@ Token *LuaLexer::ReadDecimalNumber()
                     break;
             }
 
-            throw LexerException("malformed decimal number, got " + string(GetStringRelative(0, 1)), position - 1, position);
+            throw LexerException("malformed decimal number, got " + string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
-    ReadFirstFromStringArray(runtime_syntax->number_annotations);
+    ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
     return new Token(TokenType::Number);
 }
@@ -357,7 +357,7 @@ Token *LuaLexer::ReadMultilineString()
     }
 
     if (!IsString("[", 0))
-        throw LexerException("malformed multiline string: expected =, got " + string(GetStringRelative(0, 1)), start, position);
+        throw LexerException("malformed multiline string: expected =, got " + string(GetRelativeStringSlice(0, 1)), start, position);
 
     position += 1;
     auto pos = position;
@@ -453,6 +453,9 @@ Token *LuaLexer::ReadNonWhitespaceToken()
 
 Token *LuaLexer::ReadWhitespaceToken()
 {
+    if (auto res = ReadRemainingCommentEscape())
+        return res;
+
     if (auto res = ReadSpace())
         return res;
 

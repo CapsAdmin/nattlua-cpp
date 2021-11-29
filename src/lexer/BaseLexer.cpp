@@ -1,12 +1,7 @@
 #include "./BaseLexer.hpp"
 #include "../code/Code.hpp"
 
-string_view BaseLexer::GetStringSlice(size_t start, size_t stop)
-{
-    return code->GetStringSlice(start, stop);
-}
-
-string_view BaseLexer::GetStringRelative(size_t start, size_t stop)
+string_view BaseLexer::GetRelativeStringSlice(size_t start, size_t stop)
 {
     return code->GetStringSlice(position + start, position + stop);
 }
@@ -15,9 +10,10 @@ uint8_t BaseLexer::GetByte(size_t offset)
 {
     return code->GetByte(position + offset);
 }
+
 bool BaseLexer::IsString(const string value, const size_t relative_offset)
 {
-    auto l = GetStringSlice(position + relative_offset, position + relative_offset + value.size());
+    auto l = code->GetStringSlice(position + relative_offset, position + relative_offset + value.size());
 
     return l == value;
 }
@@ -45,9 +41,9 @@ bool BaseLexer::TheEnd()
     return position >= code->GetByteSize();
 }
 
-bool BaseLexer::ReadFirstFromStringArray(vector<string> array)
+bool BaseLexer::ReadFirstFromStringArray(vector<string> strings)
 {
-    for (auto &str : array)
+    for (auto &str : strings)
     {
         if (IsString(str))
         {
@@ -140,8 +136,6 @@ Token *BaseLexer::ReadSingleToken()
         token = res;
     else if (auto res = ReadEndOfFile())
         token = res;
-    else if (auto res = ReadRemainingCommentEscape())
-        token = res;
     else if (auto res = ReadWhitespaceToken())
         token = res;
     else if (auto res = ReadNonWhitespaceToken())
@@ -171,10 +165,10 @@ Token *BaseLexer::ReadToken()
         {
             for (auto &token : whitespace_tokens)
             {
-                token->value = GetStringSlice(token->start, token->stop);
+                token->value = code->GetStringSlice(token->start, token->stop);
             }
 
-            token->value = GetStringSlice(token->start, token->stop);
+            token->value = code->GetStringSlice(token->start, token->stop);
             token->whitespace = whitespace_tokens;
 
             whitespace_tokens.clear();

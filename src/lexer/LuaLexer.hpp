@@ -7,8 +7,6 @@ public:
     LuaLexer(Code *code)
     {
         this->code = code;
-        this->runtime_syntax = new RuntimeSyntax();
-        this->typesystem_syntax = new TypesystemSyntax();
     };
     ~LuaLexer() {}
 
