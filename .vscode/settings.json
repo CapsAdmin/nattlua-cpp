@@ -61,7 +61,10 @@
         "stop_token": "cpp",
         "cinttypes": "cpp",
         "semaphore": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "unordered_set": "cpp"
     },
     "C_Cpp.default.cppStandard": "gnu++20",
     "CppHelper.SourcePattern": [
