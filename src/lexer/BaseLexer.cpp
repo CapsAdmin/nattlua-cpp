@@ -63,7 +63,7 @@ Token *BaseLexer::ReadCommentEscape()
     position += 5;
     comment_escape = true;
 
-    return new Token(TokenType::CommentEscape);
+    return new Token(Token::Kind::CommentEscape);
 }
 
 Token *BaseLexer::ReadRemainingCommentEscape()
@@ -74,7 +74,7 @@ Token *BaseLexer::ReadRemainingCommentEscape()
     position += 2;
     comment_escape = false;
 
-    return new Token(TokenType::CommentEscape);
+    return new Token(Token::Kind::CommentEscape);
 }
 
 Token *BaseLexer::ReadEndOfFile()
@@ -82,14 +82,14 @@ Token *BaseLexer::ReadEndOfFile()
     if (!TheEnd())
         return nullptr;
 
-    return new Token(TokenType::EndOfFile);
+    return new Token(Token::Kind::EndOfFile);
 }
 
 Token *BaseLexer::ReadUnknown()
 {
     position += 1;
 
-    return new Token(TokenType::Unknown);
+    return new Token(Token::Kind::Unknown);
 }
 
 /*
@@ -106,7 +106,7 @@ Token *BaseLexer::ReadUnknown()
             }
         }
 
-        Ok(Some(TokenType::Shebang))
+        Ok(Some(Token::Kind::Shebang))
     }
 */
 
@@ -123,7 +123,7 @@ Token *BaseLexer::ReadShebang()
             break;
     }
 
-    return new Token(TokenType::Shebang);
+    return new Token(Token::Kind::Shebang);
 }
 
 Token *BaseLexer::ReadSingleToken()
@@ -178,12 +178,12 @@ Token *BaseLexer::ReadToken()
     }
 }
 
-std::pair<std::vector<Token *>, std::vector<LexerException>> BaseLexer::GetTokens()
+std::pair<std::vector<Token *>, std::vector<BaseLexer::Exception>> BaseLexer::GetTokens()
 {
     ResetState();
 
     auto tokens = std::vector<Token *>();
-    auto errors = std::vector<LexerException>();
+    auto errors = std::vector<BaseLexer::Exception>();
 
     while (true)
     {
@@ -193,12 +193,12 @@ std::pair<std::vector<Token *>, std::vector<LexerException>> BaseLexer::GetToken
 
             tokens.push_back(token);
 
-            if (token->kind == TokenType::EndOfFile)
+            if (token->kind == Token::Kind::EndOfFile)
             {
                 break;
             }
         }
-        catch (LexerException &err)
+        catch (BaseLexer::Exception &err)
         {
             errors.push_back(err);
         }

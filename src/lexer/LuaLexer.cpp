@@ -14,7 +14,7 @@ Token *LuaLexer::ReadSpace()
             break;
     }
 
-    return new Token(TokenType::Space);
+    return new Token(Token::Kind::Space);
 }
 
 Token *LuaLexer::ReadLetter()
@@ -30,7 +30,7 @@ Token *LuaLexer::ReadLetter()
             break;
     }
 
-    return new Token(TokenType::Letter);
+    return new Token(Token::Kind::Letter);
 }
 
 Token *LuaLexer::ReadSymbol()
@@ -38,7 +38,7 @@ Token *LuaLexer::ReadSymbol()
     if (!ReadFirstFromStringArray(runtime_syntax->GetSymbols()) && !ReadFirstFromStringArray(typesystem_syntax->GetSymbols()))
         return nullptr;
 
-    return new Token(TokenType::Symbol);
+    return new Token(Token::Kind::Symbol);
 }
 
 Token *LuaLexer::ReadMultilineCComment()
@@ -54,13 +54,13 @@ Token *LuaLexer::ReadMultilineCComment()
         if (IsString("*/"))
         {
             position += 2;
-            return new Token(TokenType::MultilineComment);
+            return new Token(Token::Kind::MultilineComment);
         }
 
         position += 1;
     }
 
-    throw LexerException("expected multiline C comment to end, reached end of code", start, position);
+    throw BaseLexer::Exception("expected multiline C comment to end, reached end of code", start, position);
 }
 
 Token *LuaLexer::ReadLineComment()
@@ -78,7 +78,7 @@ Token *LuaLexer::ReadLineComment()
         position += 1;
     }
 
-    return new Token(TokenType::LineComment);
+    return new Token(Token::Kind::LineComment);
 }
 
 Token *LuaLexer::ReadLineCComment()
@@ -96,7 +96,7 @@ Token *LuaLexer::ReadLineCComment()
         position += 1;
     }
 
-    return new Token(TokenType::LineComment);
+    return new Token(Token::Kind::LineComment);
 }
 
 std::string repeat(const std::string &input, size_t num)
@@ -137,12 +137,12 @@ Token *LuaLexer::ReadMultilineComment()
     if (pos2.has_value())
     {
         position = pos2.value() + closing.size();
-        return new Token(TokenType::MultilineComment);
+        return new Token(Token::Kind::MultilineComment);
     }
 
     position = start + 2;
 
-    throw LexerException("expected multiline comment to end, reached end of code", start, start + 1);
+    throw BaseLexer::Exception("expected multiline comment to end, reached end of code", start, start + 1);
 }
 
 Token *LuaLexer::ReadAnalyzerDebugCode()
@@ -160,7 +160,7 @@ Token *LuaLexer::ReadAnalyzerDebugCode()
         position += 1;
     }
 
-    return new Token(TokenType::AnalyzerDebugCode);
+    return new Token(Token::Kind::AnalyzerDebugCode);
 }
 
 Token *LuaLexer::ReadParserDebugCode()
@@ -178,7 +178,7 @@ Token *LuaLexer::ReadParserDebugCode()
         position += 1;
     }
 
-    return new Token(TokenType::ParserDebugCode);
+    return new Token(Token::Kind::ParserDebugCode);
 }
 
 bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
@@ -187,13 +187,13 @@ bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
     lexer.position += 1;
 
     if (!lexer.IsString("+") && !lexer.IsString("-"))
-        throw LexerException("expected + or - after " + what + ", got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 1, lexer.position);
+        throw BaseLexer::Exception("expected + or - after " + what + ", got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 1, lexer.position);
 
     // skip the '+' or '-'
     lexer.position += 1;
 
     if (!IsNumber(lexer.GetByte()))
-        throw LexerException("malformed '" + what + "' expected number, got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 2, lexer.position - 1);
+        throw BaseLexer::Exception("malformed '" + what + "' expected number, got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 2, lexer.position - 1);
 
     while (!lexer.TheEnd())
     {
@@ -238,13 +238,13 @@ Token *LuaLexer::ReadHexNumber()
                     break;
             }
 
-            throw LexerException("malformed hex number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
+            throw BaseLexer::Exception("malformed hex number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(TokenType::Number);
+    return new Token(Token::Kind::Number);
 }
 
 Token *LuaLexer::ReadBinaryNumber()
@@ -275,13 +275,13 @@ Token *LuaLexer::ReadBinaryNumber()
                     break;
             }
 
-            throw LexerException("malformed binary number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
+            throw BaseLexer::Exception("malformed binary number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(TokenType::Number);
+    return new Token(Token::Kind::Number);
 }
 
 Token *LuaLexer::ReadDecimalNumber()
@@ -329,13 +329,13 @@ Token *LuaLexer::ReadDecimalNumber()
                     break;
             }
 
-            throw LexerException("malformed decimal number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
+            throw BaseLexer::Exception("malformed decimal number, got " + std::string(GetRelativeStringSlice(0, 1)), position - 1, position);
         }
     }
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(TokenType::Number);
+    return new Token(Token::Kind::Number);
 }
 
 Token *LuaLexer::ReadMultilineString()
@@ -357,7 +357,7 @@ Token *LuaLexer::ReadMultilineString()
     }
 
     if (!IsString("[", 0))
-        throw LexerException("malformed multiline string: expected =, got " + std::string(GetRelativeStringSlice(0, 1)), start, position);
+        throw BaseLexer::Exception("malformed multiline string: expected =, got " + std::string(GetRelativeStringSlice(0, 1)), start, position);
 
     position += 1;
     auto pos = position;
@@ -368,10 +368,10 @@ Token *LuaLexer::ReadMultilineString()
     if (pos2.has_value())
     {
         position = pos2.value() + closing.size();
-        return new Token(TokenType::String);
+        return new Token(Token::Kind::String);
     }
 
-    throw LexerException("expected multiline string to end, reached end of code", start, position);
+    throw BaseLexer::Exception("expected multiline string to end, reached end of code", start, position);
 }
 
 Token *ReadQuotedString(LuaLexer &lexer, const char quote)
@@ -395,15 +395,15 @@ Token *ReadQuotedString(LuaLexer &lexer, const char quote)
         }
         else if (byte == '\n')
         {
-            throw LexerException("expected ending " + std::string(1, quote) + " quote, got newline", start, lexer.position);
+            throw BaseLexer::Exception("expected ending " + std::string(1, quote) + " quote, got newline", start, lexer.position);
         }
         else if (byte == quote)
         {
-            return new Token(TokenType::String);
+            return new Token(Token::Kind::String);
         }
     }
 
-    throw LexerException("expected ending " + std::string(1, quote) + " quote, reached end of code", start, lexer.position - 1);
+    throw BaseLexer::Exception("expected ending " + std::string(1, quote) + " quote, reached end of code", start, lexer.position - 1);
 }
 
 Token *LuaLexer::ReadSingleQuotedString()

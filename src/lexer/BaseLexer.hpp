@@ -6,31 +6,29 @@
 #include "../syntax/TypesystemSyntax.hpp"
 #include "./Token.hpp"
 
-// lexer exception
-
-class LexerException : public std::exception
-{
-private:
-    std::string message;
-    size_t start;
-    size_t stop;
-
-public:
-    explicit LexerException(const std::string &message, size_t start, size_t stop)
-    {
-        this->message = message;
-        this->start = start;
-        this->stop = stop;
-    }
-    const char *what() const noexcept override
-    {
-        return message.c_str();
-    }
-};
-
 class BaseLexer
 {
 public:
+    class Exception : public std::exception
+    {
+    private:
+        std::string message;
+        size_t start;
+        size_t stop;
+
+    public:
+        explicit Exception(const std::string &message, size_t start, size_t stop)
+        {
+            this->message = message;
+            this->start = start;
+            this->stop = stop;
+        }
+        const char *what() const noexcept override
+        {
+            return message.c_str();
+        }
+    };
+
     Code *code;
     size_t position = 0;
     RuntimeSyntax *runtime_syntax = new RuntimeSyntax();
@@ -45,7 +43,7 @@ public:
     Token *ReadEndOfFile();
     Token *ReadCommentEscape();
     Token *ReadRemainingCommentEscape();
-    std::pair<std::vector<Token *>, std::vector<LexerException>> GetTokens();
+    std::pair<std::vector<Token *>, std::vector<BaseLexer::Exception>> GetTokens();
 
     std::string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);

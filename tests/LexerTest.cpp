@@ -23,7 +23,7 @@ Token *OneToken(std::vector<Token *> tokens)
         throw std::runtime_error("expected one token");
     }
 
-    assert(tokens[1]->kind == TokenType::EndOfFile);
+    assert(tokens[1]->kind == Token::Kind::EndOfFile);
 
     return tokens[0];
 }
@@ -69,26 +69,26 @@ TEST(Lexer, TokensToString)
 }
 TEST(Lexer, Smoke)
 {
-    EXPECT_EQ(Tokenize("")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(OneToken(Tokenize("a"))->kind, TokenType::Letter);
-    EXPECT_EQ(OneToken(Tokenize("1"))->kind, TokenType::Number);
-    EXPECT_EQ(OneToken(Tokenize("("))->kind, TokenType::Symbol);
+    EXPECT_EQ(Tokenize("")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(OneToken(Tokenize("a"))->kind, Token::Kind::Letter);
+    EXPECT_EQ(OneToken(Tokenize("1"))->kind, Token::Kind::Number);
+    EXPECT_EQ(OneToken(Tokenize("("))->kind, Token::Kind::Symbol);
 }
 
 TEST(Lexer, Shebang)
 {
-    EXPECT_EQ(Tokenize("#!/usr/bin/env lua\nprint(1)")[0]->kind, TokenType::Shebang);
+    EXPECT_EQ(Tokenize("#!/usr/bin/env lua\nprint(1)")[0]->kind, Token::Kind::Shebang);
 }
 
 TEST(Lexer, SingleQuoteString)
 {
-    EXPECT_EQ(OneToken(Tokenize("'foo'"))->kind, TokenType::String);
+    EXPECT_EQ(OneToken(Tokenize("'foo'"))->kind, Token::Kind::String);
 }
 
 TEST(Lexer, ZEscapedString)
 {
-    EXPECT_EQ(OneToken(Tokenize("\"a\\z\na\""))->kind, TokenType::String);
-    EXPECT_EQ(OneToken(Tokenize("\"a\\z\n\n   \na\""))->kind, TokenType::String);
+    EXPECT_EQ(OneToken(Tokenize("\"a\\z\na\""))->kind, Token::Kind::String);
+    EXPECT_EQ(OneToken(Tokenize("\"a\\z\n\n   \na\""))->kind, Token::Kind::String);
     ExpectError("\"a\\z\n\n--foo  \na\"", "expected ending \" quote, got newline");
 }
 
@@ -148,22 +148,22 @@ TEST(Lexer, MultilineString)
 
 TEST(Lexer, MultilineComment)
 {
-    EXPECT_EQ(Tokenize("--[[a]]")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(Tokenize("--[=[a]=]")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(Tokenize("--[==[a]==]")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(Tokenize("/*a*/")[0]->kind, TokenType::EndOfFile);
+    EXPECT_EQ(Tokenize("--[[a]]")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(Tokenize("--[=[a]=]")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(Tokenize("--[==[a]==]")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(Tokenize("/*a*/")[0]->kind, Token::Kind::EndOfFile);
 }
 
 TEST(Lexer, LineComment)
 {
-    EXPECT_EQ(Tokenize("-- a")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(Tokenize("// a")[0]->kind, TokenType::EndOfFile);
-    EXPECT_EQ(Tokenize("--[= a")[0]->kind, TokenType::EndOfFile);
+    EXPECT_EQ(Tokenize("-- a")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(Tokenize("// a")[0]->kind, Token::Kind::EndOfFile);
+    EXPECT_EQ(Tokenize("--[= a")[0]->kind, Token::Kind::EndOfFile);
 }
 
 TEST(Lexer, CommentEscape)
 {
-    EXPECT_EQ(Tokenize("--[[# 1337 ]]")[0]->kind, TokenType::Number);
+    EXPECT_EQ(Tokenize("--[[# 1337 ]]")[0]->kind, Token::Kind::Number);
 }
 
 TEST(Lexer, TypesystemSymbols)
@@ -178,6 +178,6 @@ TEST(Lexer, UnknownSymbols)
 
 TEST(Lexer, DebugCode)
 {
-    EXPECT_EQ(Tokenize("§foo = true")[0]->kind, TokenType::AnalyzerDebugCode);
-    EXPECT_EQ(Tokenize("£foo = true")[0]->kind, TokenType::ParserDebugCode);
+    EXPECT_EQ(Tokenize("§foo = true")[0]->kind, Token::Kind::AnalyzerDebugCode);
+    EXPECT_EQ(Tokenize("£foo = true")[0]->kind, Token::Kind::ParserDebugCode);
 }

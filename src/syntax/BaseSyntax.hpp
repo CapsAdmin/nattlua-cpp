@@ -30,14 +30,35 @@ public:
 
     auto GetSymbols() { return symbols; }
     auto GetNumberAnnotations() { return number_annotations; }
+    bool IsPrefixOperator(const std::string_view &op)
+    {
+        return prefix_operators_lookup.contains(std::string(op));
+    }
+    bool IsPostfixOperator(const std::string_view &op)
+    {
+        return postfix_operators_lookup.contains(std::string(op));
+    }
+    bool IsBinaryOperator(const std::string_view &op)
+    {
+        return primary_binary_operators_lookup.contains(std::string(op));
+    }
+    bool IsKeyword(const std::string_view &kw)
+    {
+        return keyword_lookup.contains(std::string(kw));
+    }
+    bool IsKeywordValue(const std::string_view &kw)
+    {
+        return keyword_values_lookup.contains(std::string(kw));
+    }
 
 private:
     std::vector<std::string> symbols;
     std::vector<std::string> number_annotations;
-    std::map<std::string, std::vector<std::string>> lookup;
+    std::map<std::string, std::vector<std::string>> translation_lookup;
     std::map<std::string, BinaryOperatorInfo> binary_operator_info;
     std::set<std::string> primary_binary_operators_lookup;
     std::set<std::string> postfix_operators_lookup;
+    std::set<std::string> prefix_operators_lookup;
     std::set<std::string> keyword_values_lookup;
     std::set<std::string> keyword_lookup;
     std::set<std::string> non_standard_keyword_lookup;

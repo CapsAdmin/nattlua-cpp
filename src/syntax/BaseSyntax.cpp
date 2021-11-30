@@ -3,7 +3,7 @@
 
 void BaseSyntax::AddPrefixOperators(std::vector<std::string> vec)
 {
-    postfix_operators_lookup.insert(vec.begin(), vec.end());
+    prefix_operators_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
@@ -83,7 +83,7 @@ void BaseSyntax::AddBinaryOperatorTranslation(std::map<std::string, std::string>
             auto mid = matches[2].str();
             auto right = matches[3].str();
 
-            lookup.insert(make_pair(key, std::vector<std::string>{" " + left, mid, " " + right}));
+            translation_lookup.insert(make_pair(key, std::vector<std::string>{" " + left, mid, " " + right}));
         };
     }
 }
@@ -101,7 +101,7 @@ void BaseSyntax::AddPrefixOperatorTranslation(std::map<std::string, std::string>
             auto left = matches[1].str();
             auto right = matches[2].str();
 
-            lookup.insert(make_pair(key, std::vector<std::string>{" " + left, right}));
+            translation_lookup.insert(make_pair(key, std::vector<std::string>{" " + left, right}));
         };
     }
 }
@@ -119,7 +119,7 @@ void BaseSyntax::AddPostfixOperatorTranslation(std::map<std::string, std::string
             auto left = matches[1].str();
             auto right = matches[2].str();
 
-            lookup.insert(make_pair(key, std::vector<std::string>{left, " " + right}));
+            translation_lookup.insert(make_pair(key, std::vector<std::string>{left, " " + right}));
         };
     }
 }
