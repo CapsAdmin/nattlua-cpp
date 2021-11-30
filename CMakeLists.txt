@@ -32,7 +32,8 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(
     tests
-    tests/LexerTest.cpp
+    tests/Lexer.cpp
+    tests/Parser.cpp
 )
 
 include(GoogleTest)
