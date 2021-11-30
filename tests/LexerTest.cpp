@@ -1,4 +1,5 @@
 #include "../src/lexer/LuaLexer.hpp"
+#include "../src/parser/LuaParser.hpp"
 #include <assert.h>
 #include <gtest/gtest.h>
 
@@ -180,4 +181,10 @@ TEST(Lexer, DebugCode)
 {
     EXPECT_EQ(Tokenize("§foo = true")[0]->kind, Token::Kind::AnalyzerDebugCode);
     EXPECT_EQ(Tokenize("£foo = true")[0]->kind, Token::Kind::ParserDebugCode);
+}
+
+TEST(Parser, Table)
+{
+    auto tokens = Tokenize("{}");
+    auto parser = new LuaParser(tokens);
 }
