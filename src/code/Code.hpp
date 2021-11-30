@@ -4,19 +4,17 @@
 #include <string>
 #include <optional>
 
-using namespace std;
-
 class Code
 {
 private:
-    string_view buffer;
-    string name;
+    std::string_view buffer;
+    std::string name;
 
 public:
-    Code(string_view buffer, string name);
+    Code(std::string_view buffer, std::string name);
     ~Code();
     size_t GetByteSize();
-    string_view GetStringSlice(size_t start, size_t end);
-    optional<size_t> FindNearest(string pattern, size_t from);
+    std::string_view GetStringSlice(size_t start, size_t end);
+    std::optional<size_t> FindNearest(std::string pattern, size_t from);
     uint8_t GetByte(size_t index);
 };

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 enum TokenType : uint8_t
 {
@@ -26,8 +28,8 @@ public:
     TokenType kind;
     size_t start;
     size_t stop;
-    string_view value;
-    vector<Token *> whitespace;
+    std::string_view value;
+    std::vector<Token *> whitespace;
     inline Token(TokenType kind)
     {
         this->kind = kind;

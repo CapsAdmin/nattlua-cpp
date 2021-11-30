@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-using namespace std;
 
 static inline bool IsValidHex(uint8_t c)
 {

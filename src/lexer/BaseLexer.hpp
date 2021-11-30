@@ -6,19 +6,17 @@
 #include "../syntax/TypesystemSyntax.hpp"
 #include "./Token.hpp"
 
-using namespace std;
-
 // lexer exception
 
-class LexerException : public exception
+class LexerException : public std::exception
 {
 private:
-    string message;
+    std::string message;
     size_t start;
     size_t stop;
 
 public:
-    explicit LexerException(const string &message, size_t start, size_t stop)
+    explicit LexerException(const std::string &message, size_t start, size_t stop)
     {
         this->message = message;
         this->start = start;
@@ -47,16 +45,16 @@ public:
     Token *ReadEndOfFile();
     Token *ReadCommentEscape();
     Token *ReadRemainingCommentEscape();
-    pair<vector<Token *>, vector<LexerException>> GetTokens();
+    std::pair<std::vector<Token *>, std::vector<LexerException>> GetTokens();
 
-    string_view GetRelativeStringSlice(size_t start, size_t stop);
+    std::string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);
-    bool IsString(const string value, const size_t relative_offset = 0);
+    bool IsString(const std::string value, const size_t relative_offset = 0);
     void ResetState();
-    optional<size_t> FindNearest(string pattern);
+    std::optional<size_t> FindNearest(std::string pattern);
     uint8_t ReadByte();
     bool TheEnd();
-    bool ReadFirstFromStringArray(vector<string> array);
+    bool ReadFirstFromStringArray(std::vector<std::string> array);
 
 private:
     bool comment_escape = false;

@@ -1,27 +1,25 @@
 
 #include "./BaseSyntax.hpp"
 
-using namespace std;
-
-void BaseSyntax::AddPrefixOperators(vector<string> vec)
+void BaseSyntax::AddPrefixOperators(std::vector<std::string> vec)
 {
     postfix_operators_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddPostfixOperators(vector<string> vec)
+void BaseSyntax::AddPostfixOperators(std::vector<std::string> vec)
 {
     postfix_operators_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddPrimaryBinaryOperators(vector<string> vec)
+void BaseSyntax::AddPrimaryBinaryOperators(std::vector<std::string> vec)
 {
     primary_binary_operators_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddBinaryOperators(vector<vector<string>> operators)
+void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> operators)
 {
     uint8_t priority = 0;
     for (auto &op : operators)
@@ -48,36 +46,36 @@ void BaseSyntax::AddBinaryOperators(vector<vector<string>> operators)
     }
 }
 
-void BaseSyntax::AddKeywords(vector<string> vec)
+void BaseSyntax::AddKeywords(std::vector<std::string> vec)
 {
     keyword_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddNonStandardKeywords(vector<string> vec)
+void BaseSyntax::AddNonStandardKeywords(std::vector<std::string> vec)
 {
     non_standard_keyword_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddKeywordValues(vector<string> vec)
+void BaseSyntax::AddKeywordValues(std::vector<std::string> vec)
 {
     keyword_values_lookup.insert(vec.begin(), vec.end());
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddSymbolCharacters(vector<string> vec)
+void BaseSyntax::AddSymbolCharacters(std::vector<std::string> vec)
 {
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddBinaryOperatorTranslation(map<string, string> map)
+void BaseSyntax::AddBinaryOperatorTranslation(std::map<std::string, std::string> map)
 {
     auto const pattern = std::regex("(.*)A(.*)B(.*)");
 
     for (auto const &[key, val] : map)
     {
-        smatch matches;
+        std::smatch matches;
         if (std::regex_search(val, matches, pattern))
         {
 
@@ -85,53 +83,53 @@ void BaseSyntax::AddBinaryOperatorTranslation(map<string, string> map)
             auto mid = matches[2].str();
             auto right = matches[3].str();
 
-            lookup.insert(make_pair(key, vector<string>{" " + left, mid, " " + right}));
+            lookup.insert(make_pair(key, std::vector<std::string>{" " + left, mid, " " + right}));
         };
     }
 }
 
-void BaseSyntax::AddPrefixOperatorTranslation(map<string, string> map)
+void BaseSyntax::AddPrefixOperatorTranslation(std::map<std::string, std::string> map)
 {
     auto const pattern = std::regex("(.*)A(.*)");
 
     for (auto const &[key, val] : map)
     {
-        smatch matches;
+        std::smatch matches;
         if (std::regex_search(val, matches, pattern))
         {
 
             auto left = matches[1].str();
             auto right = matches[2].str();
 
-            lookup.insert(make_pair(key, vector<string>{" " + left, right}));
+            lookup.insert(make_pair(key, std::vector<std::string>{" " + left, right}));
         };
     }
 }
 
-void BaseSyntax::AddPostfixOperatorTranslation(map<string, string> map)
+void BaseSyntax::AddPostfixOperatorTranslation(std::map<std::string, std::string> map)
 {
     auto const pattern = std::regex("(.*)A(.*)");
 
     for (auto const &[key, val] : map)
     {
-        smatch matches;
+        std::smatch matches;
         if (std::regex_search(val, matches, pattern))
         {
 
             auto left = matches[1].str();
             auto right = matches[2].str();
 
-            lookup.insert(make_pair(key, vector<string>{left, " " + right}));
+            lookup.insert(make_pair(key, std::vector<std::string>{left, " " + right}));
         };
     }
 }
 
-void BaseSyntax::AddNumberAnnotation(vector<string> vec)
+void BaseSyntax::AddNumberAnnotation(std::vector<std::string> vec)
 {
     number_annotations.insert(number_annotations.end(), vec.begin(), vec.end());
 }
 
-void BaseSyntax::AddSymbols(vector<string> strings)
+void BaseSyntax::AddSymbols(std::vector<std::string> strings)
 {
     auto pattern = std::regex("[^\\p{L}\\d\\s@#]");
 
@@ -143,11 +141,11 @@ void BaseSyntax::AddSymbols(vector<string> strings)
         }
     }
 
-    sort(symbols.begin(), symbols.end(), [](const string &a, const string &b)
+    sort(symbols.begin(), symbols.end(), [](const std::string &a, const std::string &b)
          { return a.size() > b.size(); });
 }
 
-void BaseSyntax::AddBinarySymbols(vector<string> strings)
+void BaseSyntax::AddBinarySymbols(std::vector<std::string> strings)
 {
     for (auto &str : strings)
     {

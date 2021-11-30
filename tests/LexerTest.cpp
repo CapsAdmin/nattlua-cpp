@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <gtest/gtest.h>
 
-vector<Token *> Tokenize(string_view code)
+std::vector<Token *> Tokenize(std::string_view code)
 {
     auto code_obj = new Code(code, "test");
     LuaLexer lexer(code_obj);
@@ -16,11 +16,11 @@ vector<Token *> Tokenize(string_view code)
     return tokens;
 }
 
-Token *OneToken(vector<Token *> tokens)
+Token *OneToken(std::vector<Token *> tokens)
 {
     if (tokens.size() != 2)
     {
-        throw runtime_error("expected one token");
+        throw std::runtime_error("expected one token");
     }
 
     assert(tokens[1]->kind == TokenType::EndOfFile);
@@ -28,9 +28,9 @@ Token *OneToken(vector<Token *> tokens)
     return tokens[0];
 }
 
-string TokensToString(vector<Token *> tokens)
+std::string TokensToString(std::vector<Token *> tokens)
 {
-    stringstream ss;
+    std::stringstream ss;
 
     for (auto &token : tokens)
     {
@@ -45,7 +45,7 @@ string TokensToString(vector<Token *> tokens)
     return ss.str();
 }
 
-void ExpectError(string_view code, string error_message)
+void ExpectError(std::string_view code, std::string error_message)
 {
     auto code_obj = new Code(code, "test");
     LuaLexer lexer(code_obj);
@@ -55,7 +55,7 @@ void ExpectError(string_view code, string error_message)
     EXPECT_EQ(errors[0].what(), error_message);
 }
 
-void Check(string_view code)
+void Check(std::string_view code)
 {
     auto tokens = Tokenize(code);
     auto actual_tokens = TokensToString(tokens);

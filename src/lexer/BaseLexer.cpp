@@ -1,7 +1,7 @@
 #include "./BaseLexer.hpp"
 #include "../code/Code.hpp"
 
-string_view BaseLexer::GetRelativeStringSlice(size_t start, size_t stop)
+std::string_view BaseLexer::GetRelativeStringSlice(size_t start, size_t stop)
 {
     return code->GetStringSlice(position + start, position + stop);
 }
@@ -11,7 +11,7 @@ uint8_t BaseLexer::GetByte(size_t offset)
     return code->GetByte(position + offset);
 }
 
-bool BaseLexer::IsString(const string value, const size_t relative_offset)
+bool BaseLexer::IsString(const std::string value, const size_t relative_offset)
 {
     auto l = code->GetStringSlice(position + relative_offset, position + relative_offset + value.size());
 
@@ -24,7 +24,7 @@ void BaseLexer::ResetState()
     position = 0;
 }
 
-optional<size_t> BaseLexer::FindNearest(string pattern)
+std::optional<size_t> BaseLexer::FindNearest(std::string pattern)
 {
     return code->FindNearest(pattern, position);
 }
@@ -41,7 +41,7 @@ bool BaseLexer::TheEnd()
     return position >= code->GetByteSize();
 }
 
-bool BaseLexer::ReadFirstFromStringArray(vector<string> strings)
+bool BaseLexer::ReadFirstFromStringArray(std::vector<std::string> strings)
 {
     for (auto &str : strings)
     {
@@ -151,7 +151,7 @@ Token *BaseLexer::ReadSingleToken()
 
 Token *BaseLexer::ReadToken()
 {
-    auto whitespace_tokens = vector<Token *>();
+    auto whitespace_tokens = std::vector<Token *>();
 
     while (true)
     {
@@ -178,12 +178,12 @@ Token *BaseLexer::ReadToken()
     }
 }
 
-pair<vector<Token *>, vector<LexerException>> BaseLexer::GetTokens()
+std::pair<std::vector<Token *>, std::vector<LexerException>> BaseLexer::GetTokens()
 {
     ResetState();
 
-    auto tokens = vector<Token *>();
-    auto errors = vector<LexerException>();
+    auto tokens = std::vector<Token *>();
+    auto errors = std::vector<LexerException>();
 
     while (true)
     {
