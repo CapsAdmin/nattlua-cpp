@@ -181,7 +181,7 @@ Token *LuaLexer::ReadParserDebugCode()
     return new Token(TokenType::ParserDebugCode);
 }
 
-bool ReadNumberExponent(LuaLexer &lexer, std::string what)
+bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
 {
     // skip the 'e', 'E', 'p' or 'P'
     lexer.position += 1;
@@ -374,17 +374,17 @@ Token *LuaLexer::ReadMultilineString()
     throw LexerException("expected multiline string to end, reached end of code", start, position);
 }
 
-Token *ReadQuotedString(LuaLexer &lexer, char quote)
+Token *ReadQuotedString(LuaLexer &lexer, const char quote)
 {
     if (lexer.GetByte() != quote)
         return nullptr;
 
-    auto start = lexer.position;
+    auto const start = lexer.position;
     lexer.position += 1;
 
     while (!lexer.TheEnd())
     {
-        auto byte = lexer.ReadByte();
+        auto const byte = lexer.ReadByte();
 
         if (byte == '\\' && lexer.IsString("z"))
         {

@@ -34,9 +34,9 @@ std::string TokensToString(std::vector<Token *> tokens)
 
     for (auto &token : tokens)
     {
-        for (auto &token : token->whitespace)
+        for (auto &whitespace_token : token->whitespace)
         {
-            ss << token->value;
+            ss << whitespace_token->value;
         }
 
         ss << token->value;

@@ -49,7 +49,7 @@ public:
 
     std::string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);
-    bool IsString(const std::string value, const size_t relative_offset = 0);
+    bool IsString(const std::string &value, const size_t relative_offset = 0);
     void ResetState();
     std::optional<size_t> FindNearest(std::string pattern);
     uint8_t ReadByte();

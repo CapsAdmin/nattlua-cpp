@@ -64,7 +64,7 @@ void BaseSyntax::AddKeywordValues(std::vector<std::string> vec)
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddSymbolCharacters(std::vector<std::string> vec)
+void BaseSyntax::AddSymbolCharacters(const std::vector<std::string> vec)
 {
     AddSymbols(vec);
 }
@@ -129,7 +129,7 @@ void BaseSyntax::AddNumberAnnotation(std::vector<std::string> vec)
     number_annotations.insert(number_annotations.end(), vec.begin(), vec.end());
 }
 
-void BaseSyntax::AddSymbols(std::vector<std::string> strings)
+void BaseSyntax::AddSymbols(const std::vector<std::string> strings)
 {
     auto pattern = std::regex("[^\\p{L}\\d\\s@#]");
 
@@ -145,7 +145,7 @@ void BaseSyntax::AddSymbols(std::vector<std::string> strings)
          { return a.size() > b.size(); });
 }
 
-void BaseSyntax::AddBinarySymbols(std::vector<std::string> strings)
+void BaseSyntax::AddBinarySymbols(const std::vector<std::string> strings)
 {
     for (auto &str : strings)
     {

@@ -11,7 +11,7 @@ uint8_t BaseLexer::GetByte(size_t offset)
     return code->GetByte(position + offset);
 }
 
-bool BaseLexer::IsString(const std::string value, const size_t relative_offset)
+bool BaseLexer::IsString(const std::string &value, const size_t relative_offset)
 {
     auto l = code->GetStringSlice(position + relative_offset, position + relative_offset + value.size());
 
@@ -140,8 +140,8 @@ Token *BaseLexer::ReadSingleToken()
         token = res;
     else if (auto res = ReadNonWhitespaceToken())
         token = res;
-    else if (auto res = ReadUnknown())
-        token = res;
+    else
+        token = ReadUnknown();
 
     token->start = start;
     token->stop = position;
@@ -163,9 +163,9 @@ Token *BaseLexer::ReadToken()
         }
         else
         {
-            for (auto &token : whitespace_tokens)
+            for (auto &whitespace_token : whitespace_tokens)
             {
-                token->value = code->GetStringSlice(token->start, token->stop);
+                whitespace_token->value = code->GetStringSlice(whitespace_token->start, whitespace_token->stop);
             }
 
             token->value = code->GetStringSlice(token->start, token->stop);
@@ -198,7 +198,7 @@ std::pair<std::vector<Token *>, std::vector<LexerException>> BaseLexer::GetToken
                 break;
             }
         }
-        catch (LexerException err)
+        catch (LexerException &err)
         {
             errors.push_back(err);
         }

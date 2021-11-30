@@ -73,5 +73,10 @@
         "{FILE}.inl",
         "/src/{FILE}.cpp"
     ],
-    "cmake.configureSettings": { "gtest_build_samples": "ON" }
+    "cmake.configureSettings": {
+        "gtest_build_samples": "ON"
+    },
+    "cSpell.words": [
+        "smatch"
+    ]
 }

@@ -1,6 +1,6 @@
 #include "./Code.hpp"
 
-Code::Code(std::string_view buffer, std::string name)
+Code::Code(std::string_view buffer, const std::string name)
 {
     this->buffer = buffer;
     this->name = name;

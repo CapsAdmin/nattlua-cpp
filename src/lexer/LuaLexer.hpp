@@ -4,14 +4,14 @@
 class LuaLexer : public BaseLexer
 {
 public:
-    LuaLexer(Code *code)
+    explicit LuaLexer(Code *code)
     {
         this->code = code;
-    };
+    }
     ~LuaLexer() {}
 
-    Token *ReadNonWhitespaceToken();
-    Token *ReadWhitespaceToken();
+    Token *ReadNonWhitespaceToken() override;
+    Token *ReadWhitespaceToken() override;
 
     Token *ReadMultilineComment();
     Token *ReadLineCComment();
