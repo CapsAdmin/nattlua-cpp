@@ -14,6 +14,26 @@ TEST(Lexer, Smoke)
     EXPECT_EQ(OneToken(Tokenize("("))->kind, Token::Kind::Symbol);
 }
 
+TEST(Lexer, Symbols)
+{
+    std::vector<std::string> symbols = {
+        "+", "-", "*", "/", "%", "^", /*"#", this would become shebang*/
+        "==", "~=", "<=", ">=", "<", ">", "=",
+        "(", ")", "{", "}", "[", "]",
+        ";", ":", ",", ".", "..", "..."};
+
+    for (auto symbol : symbols)
+    {
+        auto kind = OneToken(Tokenize(symbol))->kind;
+        if (kind != Token::Kind::Symbol)
+        {
+            EXPECT_EQ(kind, Token::Kind::Symbol);
+            std::cout << "Symbol: " << symbol << std::endl;
+        }
+        EXPECT_EQ(OneToken(Tokenize(symbol))->value, symbol);
+    }
+}
+
 TEST(Lexer, Shebang)
 {
     EXPECT_EQ(Tokenize("#!/usr/bin/env lua\nprint(1)")[0]->kind, Token::Kind::Shebang);

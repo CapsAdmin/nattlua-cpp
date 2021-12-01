@@ -1,5 +1,6 @@
 
 #include "./BaseSyntax.hpp"
+#include "./CharacterClasses.hpp"
 
 void BaseSyntax::AddPrefixOperators(std::vector<std::string> vec)
 {
@@ -19,27 +20,32 @@ void BaseSyntax::AddPrimaryBinaryOperators(std::vector<std::string> vec)
     AddSymbols(vec);
 }
 
-void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> operators)
+void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> groups)
 {
     uint8_t priority = 0;
-    for (auto &op : operators)
+    for (auto &operators : groups)
     {
-
-        for (auto &token : op)
+        for (auto &op : operators)
         {
-            if (token.starts_with("R"))
+            if (op.starts_with("R"))
             {
-                binary_operator_info.insert(make_pair(token, BinaryOperatorInfo{
+                std::string op_ = std::string(op).substr(1);
+
+                binary_operator_info.insert(make_pair(op_, BinaryOperatorInfo{
                     left_priority : static_cast<uint8_t>(priority + 1),
                     right_priority : priority,
                 }));
+
+                AddSymbols({op_});
             }
             else
             {
-                binary_operator_info.insert(make_pair(token, BinaryOperatorInfo{
+                binary_operator_info.insert(make_pair(op, BinaryOperatorInfo{
                     left_priority : priority,
                     right_priority : priority,
                 }));
+
+                AddSymbols({op});
             }
         }
         priority++;
@@ -131,13 +137,15 @@ void BaseSyntax::AddNumberAnnotation(std::vector<std::string> vec)
 
 void BaseSyntax::AddSymbols(const std::vector<std::string> strings)
 {
-    auto pattern = std::regex("[^\\p{L}\\d\\s@#]");
-
     for (auto &str : strings)
     {
-        if (std::regex_match(str, pattern))
+        for (auto c : str)
         {
-            symbols.push_back(str);
+            if (IsSymbol(c))
+            {
+                symbols.push_back(str);
+                break;
+            }
         }
     }
 
