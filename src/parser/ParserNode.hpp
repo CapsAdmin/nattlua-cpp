@@ -10,4 +10,5 @@ public:
     };
     ParserNode *parent = nullptr;
     Environment environment = Runtime;
+    virtual void lol(){};
 };

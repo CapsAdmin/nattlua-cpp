@@ -33,6 +33,8 @@ public:
     RuntimeSyntax *runtime_syntax = new RuntimeSyntax();
     TypesystemSyntax *typesystem_syntax = new TypesystemSyntax();
 
+    LuaParser(std::vector<Token *> tokens);
+
     enum TokenType
     {
         Keyword,
@@ -41,69 +43,39 @@ public:
         BinaryOperator,
         None,
     };
+    TokenType GetTokenType(Token *token);
 
-    bool IsTokenValue(Token *token)
-    {
-        if (token->kind == Token::Kind::Number || token->kind == Token::Kind::String)
-            return true;
-        if (runtime_syntax->IsKeywordValue(token->value))
-            return true;
-        if (runtime_syntax->IsKeyword(token->value))
-            return false;
-        if (token->kind == Token::Kind::Letter)
-            return true;
-        return false;
-    }
+    bool IsTokenValue(Token *token);
+    bool IsValue(const std::string &val, const uint8_t offset = 0);
+    bool IsType(const Token::Kind val, const uint8_t offset = 0);
+    Token *ExpectValue(const std::string &val);
+    Token *ExpectType(const Token::Kind val);
 
-    TokenType GetTokenType(Token *token)
+    template <class T>
+    inline std::vector<T *> ReadMultipleValues(
+        const size_t max,
+        std::function<T *()> reader,
+        std::vector<Token *> &comma_tokens)
     {
-        if (token->kind == Token::Kind::Letter && runtime_syntax->IsKeyword(token->value))
+        std::vector<T *> out;
+
+        for (size_t i = 0; i < (max != 0 ? max : GetLength()); i++)
         {
-            return TokenType::Keyword;
+            T *node = reader();
+            if (!node)
+                break;
+            out.push_back(node);
+
+            if (!IsValue(","))
+                break;
+
+            comma_tokens.push_back(ExpectValue(","));
         }
-        else if (token->kind == Token::Kind::Symbol)
-        {
-            if (runtime_syntax->IsPrefixOperator(token->value))
-                return TokenType::PrefixOperator;
-            else if (runtime_syntax->IsPostfixOperator(token->value))
-                return TokenType::PostfixOperator;
-            else if (runtime_syntax->IsBinaryOperator(token->value))
-                return TokenType::BinaryOperator;
-        }
 
-        return TokenType::None;
-    }
-    LuaParser(std::vector<Token *> tokens)
-    {
-        this->tokens = tokens;
-    }
+        return out;
+    };
 
-    bool IsValue(const std::string &val, const uint8_t offset = 0)
-    {
-        return GetToken(offset)->value == val;
-    }
-
-    bool IsType(const Token::Kind val, const uint8_t offset = 0)
-    {
-        return GetToken(offset)->kind == val;
-    }
-
-    Token *ExpectValue(const std::string &val)
-    {
-        if (!IsValue(val))
-            throw Exception("Expected value: " + val, GetToken(), GetToken());
-
-        return ReadToken();
-    }
-
-    Token *ExpectType(const Token::Kind val)
-    {
-        if (!IsType(val))
-            throw Exception("Expected something", GetToken(), GetToken());
-
-        return ReadToken();
-    }
-
+    bool IsCallExpression(const uint8_t offset = 0);
     Token *ReadToken() { return tokens[index++]; };
     Token *GetToken(size_t offset = 0) { return tokens[index + offset]; };
     void StartNode(ParserNode *node){};

@@ -50,12 +50,16 @@ public:
     {
         return keyword_values_lookup.contains(std::string(kw));
     }
+    BinaryOperatorInfo *GetBinaryOperatorInfo(const std::string_view &val)
+    {
+        return binary_operator_info[std::string(val)];
+    }
 
 private:
     std::vector<std::string> symbols;
     std::vector<std::string> number_annotations;
     std::map<std::string, std::vector<std::string>> translation_lookup;
-    std::map<std::string, BinaryOperatorInfo> binary_operator_info;
+    std::map<std::string, BinaryOperatorInfo *> binary_operator_info;
     std::set<std::string> primary_binary_operators_lookup;
     std::set<std::string> postfix_operators_lookup;
     std::set<std::string> prefix_operators_lookup;

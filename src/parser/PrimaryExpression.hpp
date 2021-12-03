@@ -4,11 +4,7 @@
 #include "./LuaParser.hpp"
 #include "./ParserNode.hpp"
 
-class SubExpressionNode : public ParserNode
-{
-};
-
-class PrimaryExpressionNode : public ParserNode
+class ExpressionNode : public ParserNode
 {
 public:
     std::vector<Token *> tk_left_parenthesis = {};
@@ -17,33 +13,88 @@ public:
     Token *tk_type_colon_assignment = nullptr;
     Token *tk_type_as_assignment = nullptr;
 
-    static PrimaryExpressionNode *Parse(LuaParser *parser);
+    static ExpressionNode *Parse(LuaParser *parser, size_t priority = 0);
+
+    class PostfixExpression : public ParserNode
+    {
+    public:
+        // this can be a PostfixExpression or an ExpressionNode
+        ParserNode *left;
+    };
+    class Index : public PostfixExpression
+    {
+    public:
+        Token *op;
+        ExpressionNode *right;
+
+        static Index *Parse(LuaParser *parser);
+    };
+
+    class SelfCall : public PostfixExpression
+    {
+    public:
+        Token *op;
+        ExpressionNode *right;
+
+        static SelfCall *Parse(LuaParser *parser);
+    };
+
+    class Call : public PostfixExpression
+    {
+    public:
+        std::vector<ExpressionNode *> arguments = {};
+
+        Token *tk_arguments_left = nullptr;
+        Token *tk_arguments_right = nullptr;
+        std::vector<Token *> tk_comma = {};
+        Token *tk_type_call = nullptr;
+
+        static Call *Parse(LuaParser *parser);
+    };
+
+    class Postfix : public PostfixExpression
+    {
+    public:
+        Token *op;
+        static Postfix *Parse(LuaParser *parser);
+    };
+
+    class PostfixIndex : public PostfixExpression
+    {
+    public:
+        ExpressionNode *index = nullptr;
+
+        Token *tk_left_bracket = nullptr;
+        Token *tk_right_bracket = nullptr;
+
+        static PostfixIndex *Parse(LuaParser *parser);
+    };
+
+    class Cast : public PostfixExpression
+    {
+    public:
+        ExpressionNode *expression;
+        Token *tk_operator = nullptr;
+
+        static Cast *Parse(LuaParser *parser);
+    };
 };
 
-class Value : public PrimaryExpressionNode
+class Value : public ExpressionNode
 {
 public:
     Token *value;
+    ParserNode *standalone_letter = nullptr;
 
-    static Value *Parse(LuaParser *parser)
-    {
-        if (!parser->IsTokenValue(parser->GetToken()))
-            return nullptr;
-
-        auto node = new Value();
-        parser->StartNode(node);
-        node->value = parser->ReadToken();
-        parser->EndNode(node);
-        return node;
-    };
+    static Value *Parse(LuaParser *parser);
 };
 
 // table
 
-class Table : public PrimaryExpressionNode
+class Table : public ExpressionNode
 {
 public:
-    class Child : public SubExpressionNode
+    class Child : public ParserNode
     {
     };
 
@@ -51,68 +102,33 @@ public:
     {
     public:
         Token *key = nullptr;
-        PrimaryExpressionNode *val = nullptr;
+        ExpressionNode *val = nullptr;
 
         Token *tk_equal = nullptr;
 
-        static KeyValue *Parse(LuaParser *parser)
-        {
-            if (!parser->IsType(Token::Kind::Letter) || !parser->IsValue("=", 1))
-                return nullptr;
-
-            auto node = new KeyValue();
-            parser->StartNode(node);
-            node->key = parser->ExpectType(Token::Kind::Letter);
-            node->tk_equal = parser->ExpectValue("=");
-            node->val = PrimaryExpressionNode::Parse(parser);
-            parser->EndNode(node);
-            return node;
-        }
+        static KeyValue *Parse(LuaParser *parser);
     };
 
     class KeyExpressionValue : public Child
     {
     public:
-        PrimaryExpressionNode *key = nullptr;
-        PrimaryExpressionNode *val = nullptr;
+        ExpressionNode *key = nullptr;
+        ExpressionNode *val = nullptr;
 
         Token *tk_equal = nullptr;
         Token *tk_left_bracket = nullptr;
         Token *tk_right_bracket = nullptr;
 
-        static KeyExpressionValue *Parse(LuaParser *parser)
-        {
-            if (!parser->IsValue("["))
-                return nullptr;
-
-            auto node = new KeyExpressionValue();
-            parser->StartNode(node);
-            node->tk_left_bracket = parser->ExpectValue("[");
-            node->key = PrimaryExpressionNode::Parse(parser);
-            node->tk_right_bracket = parser->ExpectValue("]");
-            node->tk_equal = parser->ExpectValue("=");
-            node->val = PrimaryExpressionNode::Parse(parser);
-            parser->EndNode(node);
-
-            return node;
-        };
+        static KeyExpressionValue *Parse(LuaParser *parser);
     };
 
     class IndexValue : public Child
     {
     public:
         uint64_t key = 0;
-        PrimaryExpressionNode *val = nullptr;
+        ExpressionNode *val = nullptr;
 
-        static IndexValue *Parse(LuaParser *parser)
-        {
-            auto node = new IndexValue();
-            parser->StartNode(node);
-            node->val = PrimaryExpressionNode::Parse(parser);
-            parser->EndNode(node);
-
-            return node;
-        }
+        static IndexValue *Parse(LuaParser *parser);
     };
 
     std::vector<Child *> children = {};
@@ -121,86 +137,33 @@ public:
     Token *tk_right_bracket = nullptr;
     std::vector<Token *> tk_separators = {};
 
-    static Table *Parse(LuaParser *parser)
-    {
-        if (!parser->IsValue("{"))
-            return nullptr;
-
-        auto tree = new Table();
-        parser->StartNode(tree);
-
-        tree->tk_left_bracket = parser->ExpectValue("{");
-
-        size_t index = 0;
-
-        while (true)
-        {
-            if (parser->IsValue("}"))
-                break;
-
-            Child *child = nullptr;
-
-            if (auto res = KeyExpressionValue::Parse(parser))
-            {
-                child = res;
-            }
-            else if (auto res = KeyValue::Parse(parser))
-            {
-                child = res;
-            }
-            else if (auto res = IndexValue::Parse(parser))
-            {
-                res->key = index;
-                child = res;
-            }
-
-            tree->children.push_back(child);
-
-            if (!parser->IsValue(",") && !parser->IsValue(";") && !parser->IsValue("}"))
-            {
-                throw LuaParser::Exception("Expected something", parser->GetToken(), parser->GetToken());
-            }
-
-            if (!parser->IsValue("}"))
-                tree->tk_separators.push_back(parser->ExpectValue(","));
-
-            index++;
-        }
-
-        tree->tk_right_bracket = parser->ExpectValue("}");
-
-        parser->EndNode(tree);
-
-        return tree;
-    };
+    static Table *Parse(LuaParser *parser);
 };
 
-class BinaryOperator : public PrimaryExpressionNode
+class PrefixOperator : public ExpressionNode
 {
+public:
     Token *op;
-    PrimaryExpressionNode *left;
-    PrimaryExpressionNode *right;
+    ExpressionNode *right;
+
+    static PrefixOperator *Parse(LuaParser *parser);
 };
 
-class PrefixOperator : public PrimaryExpressionNode
+class PostfixOperator : public ExpressionNode
 {
+public:
     Token *op;
-    PrimaryExpressionNode *right;
+    ExpressionNode *left;
+
+    static PostfixOperator *Parse(LuaParser *parser);
 };
 
-class PostfixOperator : public PrimaryExpressionNode
+class BinaryOperator : public ExpressionNode
 {
+public:
     Token *op;
-    PrimaryExpressionNode *left;
+    ParserNode *left;
+    ExpressionNode *right;
+
+    static BinaryOperator *Parse(LuaParser *parser);
 };
-
-PrimaryExpressionNode *PrimaryExpressionNode::Parse(LuaParser *parser)
-{
-    if (auto res = Value::Parse(parser))
-        return res;
-
-    if (auto res = Table::Parse(parser))
-        return res;
-
-    return nullptr;
-}

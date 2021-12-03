@@ -10,6 +10,8 @@ add_library(
     src/syntax/BaseSyntax.cpp
     src/lexer/BaseLexer.cpp
     src/lexer/LuaLexer.cpp
+    src/parser/LuaParser.cpp
+    src/parser/PrimaryExpression.cpp
 )
 
 add_executable(main

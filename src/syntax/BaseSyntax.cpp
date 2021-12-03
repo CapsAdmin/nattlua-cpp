@@ -31,7 +31,7 @@ void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> groups
             {
                 std::string op_ = std::string(op).substr(1);
 
-                binary_operator_info.insert(make_pair(op_, BinaryOperatorInfo{
+                binary_operator_info.insert(make_pair(op_, new BinaryOperatorInfo{
                     left_priority : static_cast<uint8_t>(priority + 1),
                     right_priority : priority,
                 }));
@@ -40,7 +40,7 @@ void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> groups
             }
             else
             {
-                binary_operator_info.insert(make_pair(op, BinaryOperatorInfo{
+                binary_operator_info.insert(make_pair(op, new BinaryOperatorInfo{
                     left_priority : priority,
                     right_priority : priority,
                 }));
@@ -157,6 +157,6 @@ void BaseSyntax::AddBinarySymbols(const std::vector<std::string> strings)
 {
     for (auto &str : strings)
     {
-        binary_operator_info[str] = BinaryOperatorInfo();
+        binary_operator_info[str] = new BinaryOperatorInfo();
     }
 }
