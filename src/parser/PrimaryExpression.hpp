@@ -4,7 +4,7 @@
 #include "./LuaParser.hpp"
 #include "./ParserNode.hpp"
 
-class ExpressionNode : public ParserNode
+class Expression : public ParserNode
 {
 public:
     std::vector<Token *> tk_left_parenthesis = {};
@@ -12,20 +12,23 @@ public:
 
     Token *tk_type_colon_assignment = nullptr;
     Token *tk_type_as_assignment = nullptr;
+};
 
-    static ExpressionNode *Parse(LuaParser *parser, size_t priority = 0);
+class ValueExpression : public Expression
+{
+public:
+    static Expression *Parse(LuaParser *parser, size_t priority = 0);
 
-    class PostfixExpression : public ParserNode
+    class PostfixExpression : public Expression
     {
     public:
-        // this can be a PostfixExpression or an ExpressionNode
-        ParserNode *left;
+        Expression *left;
     };
     class Index : public PostfixExpression
     {
     public:
         Token *op;
-        ExpressionNode *right;
+        Expression *right;
 
         static Index *Parse(LuaParser *parser);
     };
@@ -34,7 +37,7 @@ public:
     {
     public:
         Token *op;
-        ExpressionNode *right;
+        Expression *right;
 
         static SelfCall *Parse(LuaParser *parser);
     };
@@ -42,7 +45,7 @@ public:
     class Call : public PostfixExpression
     {
     public:
-        std::vector<ExpressionNode *> arguments = {};
+        std::vector<Expression *> arguments = {};
 
         Token *tk_arguments_left = nullptr;
         Token *tk_arguments_right = nullptr;
@@ -52,49 +55,45 @@ public:
         static Call *Parse(LuaParser *parser);
     };
 
-    class Postfix : public PostfixExpression
+    class PostfixOperator : public PostfixExpression
     {
     public:
         Token *op;
-        static Postfix *Parse(LuaParser *parser);
+        static PostfixOperator *Parse(LuaParser *parser);
     };
 
-    class PostfixIndex : public PostfixExpression
+    class IndexExpression : public PostfixExpression
     {
     public:
-        ExpressionNode *index = nullptr;
+        Expression *index = nullptr;
 
         Token *tk_left_bracket = nullptr;
         Token *tk_right_bracket = nullptr;
 
-        static PostfixIndex *Parse(LuaParser *parser);
+        static IndexExpression *Parse(LuaParser *parser);
     };
 
-    class Cast : public PostfixExpression
+    class TypeCast : public PostfixExpression
     {
     public:
-        ExpressionNode *expression;
+        Expression *expression;
         Token *tk_operator = nullptr;
 
-        static Cast *Parse(LuaParser *parser);
+        static TypeCast *Parse(LuaParser *parser);
     };
 };
 
-class Value : public ExpressionNode
+class Atomic : public ValueExpression
 {
 public:
     Token *value;
-    ParserNode *standalone_letter = nullptr;
-
-    static Value *Parse(LuaParser *parser);
+    static Atomic *Parse(LuaParser *parser);
 };
 
-// table
-
-class Table : public ExpressionNode
+class Table : public ValueExpression
 {
 public:
-    class Child : public ParserNode
+    class Child : public Expression
     {
     };
 
@@ -102,7 +101,7 @@ public:
     {
     public:
         Token *key = nullptr;
-        ExpressionNode *val = nullptr;
+        Expression *val = nullptr;
 
         Token *tk_equal = nullptr;
 
@@ -112,8 +111,8 @@ public:
     class KeyExpressionValue : public Child
     {
     public:
-        ExpressionNode *key = nullptr;
-        ExpressionNode *val = nullptr;
+        Expression *key = nullptr;
+        Expression *val = nullptr;
 
         Token *tk_equal = nullptr;
         Token *tk_left_bracket = nullptr;
@@ -126,7 +125,7 @@ public:
     {
     public:
         uint64_t key = 0;
-        ExpressionNode *val = nullptr;
+        Expression *val = nullptr;
 
         static IndexValue *Parse(LuaParser *parser);
     };
@@ -140,30 +139,21 @@ public:
     static Table *Parse(LuaParser *parser);
 };
 
-class PrefixOperator : public ExpressionNode
+class PrefixOperator : public ValueExpression
 {
 public:
     Token *op;
-    ExpressionNode *right;
+    Expression *right;
 
     static PrefixOperator *Parse(LuaParser *parser);
 };
 
-class PostfixOperator : public ExpressionNode
+class BinaryOperator : public ValueExpression
 {
 public:
     Token *op;
-    ExpressionNode *left;
-
-    static PostfixOperator *Parse(LuaParser *parser);
-};
-
-class BinaryOperator : public ExpressionNode
-{
-public:
-    Token *op;
-    ParserNode *left;
-    ExpressionNode *right;
+    Expression *left;
+    Expression *right;
 
     static BinaryOperator *Parse(LuaParser *parser);
 };

@@ -1,11 +1,11 @@
 #include "./PrimaryExpression.hpp"
 
-Value *Value::Parse(LuaParser *parser)
+Atomic *Atomic::Parse(LuaParser *parser)
 {
     if (!parser->IsTokenValue(parser->GetToken()))
         return nullptr;
 
-    auto node = new Value();
+    auto node = new Atomic();
     parser->StartNode(node);
     node->value = parser->ReadToken();
     parser->EndNode(node);
@@ -21,7 +21,7 @@ Table::KeyValue *Table::KeyValue::Parse(LuaParser *parser)
     parser->StartNode(node);
     node->key = parser->ExpectType(Token::Kind::Letter);
     node->tk_equal = parser->ExpectValue("=");
-    node->val = ExpressionNode::Parse(parser);
+    node->val = ValueExpression::Parse(parser);
     parser->EndNode(node);
     return node;
 }
@@ -34,10 +34,10 @@ Table::KeyExpressionValue *Table::KeyExpressionValue::Parse(LuaParser *parser)
     auto node = new KeyExpressionValue();
     parser->StartNode(node);
     node->tk_left_bracket = parser->ExpectValue("[");
-    node->key = ExpressionNode::Parse(parser);
+    node->key = ValueExpression::Parse(parser);
     node->tk_right_bracket = parser->ExpectValue("]");
     node->tk_equal = parser->ExpectValue("=");
-    node->val = ExpressionNode::Parse(parser);
+    node->val = ValueExpression::Parse(parser);
     parser->EndNode(node);
 
     return node;
@@ -47,7 +47,7 @@ Table::IndexValue *Table::IndexValue::Parse(LuaParser *parser)
 {
     auto node = new IndexValue();
     parser->StartNode(node);
-    node->val = ExpressionNode::Parse(parser);
+    node->val = ValueExpression::Parse(parser);
     parser->EndNode(node);
 
     return node;
@@ -114,20 +114,7 @@ PrefixOperator *PrefixOperator::Parse(LuaParser *parser)
     auto node = new PrefixOperator();
     parser->StartNode(node);
     node->op = parser->ReadToken();
-    node->right = ExpressionNode::Parse(parser);
-    parser->EndNode(node);
-    return node;
-};
-
-PostfixOperator *PostfixOperator::Parse(LuaParser *parser)
-{
-    if (!parser->runtime_syntax->IsPostfixOperator(parser->GetToken()->value))
-        return nullptr;
-
-    auto node = new PostfixOperator();
-    parser->StartNode(node);
-    node->left = ExpressionNode::Parse(parser);
-    node->op = parser->ReadToken();
+    node->right = ValueExpression::Parse(parser);
     parser->EndNode(node);
     return node;
 };
@@ -139,20 +126,35 @@ BinaryOperator *BinaryOperator::Parse(LuaParser *parser)
 
     auto node = new BinaryOperator();
     parser->StartNode(node);
-    node->left = ExpressionNode::Parse(parser);
+    node->left = ValueExpression::Parse(parser);
     node->op = parser->ReadToken();
-    node->right = ExpressionNode::Parse(parser);
+    node->right = ValueExpression::Parse(parser);
     parser->EndNode(node);
     return node;
 };
 
-ExpressionNode *ExpressionNode::Parse(LuaParser *parser, size_t priority)
+Expression *ValueExpression::Parse(LuaParser *parser, size_t priority)
 {
-    // local x = foo()[2]
+    if (parser->IsValue("("))
+    {
+        auto left_paren = parser->ExpectValue("(");
+        auto node = ValueExpression::Parse(parser);
+        auto right_paren = parser->ExpectValue(")");
 
-    ParserNode *node = nullptr;
+        if (!node)
+        {
+            throw LuaParser::Exception("Empty parentheses group", parser->GetToken(), parser->GetToken());
+        }
 
-    if (auto res = Value::Parse(parser))
+        node->tk_left_parenthesis.push_back(left_paren); // TODO: unshift
+        node->tk_right_parenthesis.push_back(right_paren);
+
+        return node;
+    }
+
+    Expression *node = nullptr;
+
+    if (auto res = Atomic::Parse(parser))
     {
         node = res;
     }
@@ -177,15 +179,15 @@ ExpressionNode *ExpressionNode::Parse(LuaParser *parser, size_t priority)
         {
             sub = res;
         }
-        else if (auto res = Postfix::Parse(parser))
+        else if (auto res = PostfixOperator::Parse(parser))
         {
             sub = res;
         }
-        else if (auto res = PostfixIndex::Parse(parser))
+        else if (auto res = IndexExpression::Parse(parser))
         {
             sub = res;
         }
-        else if (auto res = Cast::Parse(parser))
+        else if (auto res = TypeCast::Parse(parser))
         {
             sub = res;
         }
@@ -215,7 +217,7 @@ ExpressionNode *ExpressionNode::Parse(LuaParser *parser, size_t priority)
         binary->left = left_node;
         binary->left->parent = node;
 
-        binary->right = ExpressionNode::Parse(parser, info->right_priority);
+        binary->right = ValueExpression::Parse(parser, info->right_priority);
 
         if (!binary->right)
         {
@@ -231,10 +233,10 @@ ExpressionNode *ExpressionNode::Parse(LuaParser *parser, size_t priority)
         node = binary;
     }
 
-    return static_cast<ExpressionNode *>(node);
+    return node;
 }
 
-ExpressionNode::Index *ExpressionNode::Index::Parse(LuaParser *parser)
+ValueExpression::Index *ValueExpression::Index::Parse(LuaParser *parser)
 {
     if (!parser->IsValue(".") || !parser->IsType(Token::Kind::Letter, 1))
         return nullptr;
@@ -242,13 +244,13 @@ ExpressionNode::Index *ExpressionNode::Index::Parse(LuaParser *parser)
     auto *node = new Index();
     parser->StartNode(node);
     node->op = parser->ReadToken();
-    node->right = Value::Parse(parser);
+    node->right = Atomic::Parse(parser);
     parser->EndNode(node);
 
     return node;
 }
 
-ExpressionNode::SelfCall *ExpressionNode::SelfCall::Parse(LuaParser *parser)
+ValueExpression::SelfCall *ValueExpression::SelfCall::Parse(LuaParser *parser)
 {
     if (!(parser->IsValue(":") && parser->IsType(Token::Kind::Letter, 1) && parser->IsCallExpression(2)))
         return nullptr;
@@ -257,14 +259,14 @@ ExpressionNode::SelfCall *ExpressionNode::SelfCall::Parse(LuaParser *parser)
     parser->StartNode(node);
     node->op = parser->ReadToken();
 
-    node->right = Value::Parse(parser);
+    node->right = Atomic::Parse(parser);
 
     parser->EndNode(node);
 
     return node;
 }
 
-ExpressionNode::Call *ExpressionNode::Call::Parse(LuaParser *parser)
+ValueExpression::Call *ValueExpression::Call::Parse(LuaParser *parser)
 {
     if (!parser->IsCallExpression(0))
         return nullptr;
@@ -278,16 +280,16 @@ ExpressionNode::Call *ExpressionNode::Call::Parse(LuaParser *parser)
     }
     else if (parser->IsType(Token::Kind::String))
     {
-        node->arguments.push_back(Value::Parse(parser));
+        node->arguments.push_back(Atomic::Parse(parser));
     }
     else if (parser->IsValue("("))
     {
         node->tk_arguments_left = parser->ReadToken();
-        auto values = parser->ReadMultipleValues<ExpressionNode>(
+        auto values = parser->ReadMultipleValues<ValueExpression>(
             1000,
             [parser]()
             {
-                return Value::Parse(parser);
+                return Atomic::Parse(parser);
             },
             node->tk_comma);
 
@@ -299,12 +301,12 @@ ExpressionNode::Call *ExpressionNode::Call::Parse(LuaParser *parser)
     return node;
 }
 
-ExpressionNode::Postfix *ExpressionNode::Postfix::Parse(LuaParser *parser)
+ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(LuaParser *parser)
 {
     if (!parser->runtime_syntax->IsPostfixOperator(parser->GetToken()->value))
         return nullptr;
 
-    auto node = new Postfix();
+    auto node = new PostfixOperator();
     parser->StartNode(node);
     node->op = parser->ReadToken();
     parser->EndNode(node);
@@ -312,16 +314,16 @@ ExpressionNode::Postfix *ExpressionNode::Postfix::Parse(LuaParser *parser)
     return node;
 }
 
-ExpressionNode::PostfixIndex *ExpressionNode::PostfixIndex::Parse(LuaParser *parser)
+ValueExpression::IndexExpression *ValueExpression::IndexExpression::Parse(LuaParser *parser)
 {
     if (!parser->IsValue("["))
         return nullptr;
 
-    auto *node = new PostfixIndex();
+    auto *node = new IndexExpression();
     parser->StartNode(node);
 
     node->tk_left_bracket = parser->ReadToken();
-    node->index = ExpressionNode::Parse(parser);
+    node->index = ValueExpression::Parse(parser);
     node->tk_right_bracket = parser->ReadToken();
 
     parser->EndNode(node);
@@ -329,22 +331,17 @@ ExpressionNode::PostfixIndex *ExpressionNode::PostfixIndex::Parse(LuaParser *par
     return node;
 }
 
-ExpressionNode::Cast *ExpressionNode::Cast::Parse(LuaParser *parser)
+ValueExpression::TypeCast *ValueExpression::TypeCast::Parse(LuaParser *parser)
 {
-    if (!parser->IsValue(":") || (parser->IsType(Token::Kind::Letter, 1) || parser->IsCallExpression(2)))
+    if ((!parser->IsValue(":") || (parser->IsType(Token::Kind::Letter, 1) || parser->IsCallExpression(2))) && !parser->IsValue("as"))
     {
         return nullptr;
     }
 
-    if (!parser->IsValue("as"))
-    {
-        return nullptr;
-    }
-
-    auto *node = new Cast();
+    auto *node = new TypeCast();
     parser->StartNode(node);
     node->tk_operator = parser->ReadToken(); // either as or :
-    node->expression = ExpressionNode::Parse(parser);
+    node->expression = ValueExpression::Parse(parser);
     parser->EndNode(node);
 
     return node;

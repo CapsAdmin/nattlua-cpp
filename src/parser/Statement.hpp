@@ -16,7 +16,7 @@ class EndOfFile : public StatementNode
 class AnalyzerDebugCode : public StatementNode
 {
     Token *tk_main;
-    Value *lua_code;
+    Atomic *lua_code;
 };
 
 // OPERATORS
