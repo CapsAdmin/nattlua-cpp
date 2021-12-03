@@ -94,6 +94,19 @@ TEST(Parser, Call)
         EXPECT_EQ(value->value->value, std::to_string(i + 1));
     }
 }
+TEST(Parser, ChainedCalls)
+{
+    auto tokens = Tokenize("foo(1)(2)(3)");
+    auto parser = new LuaParser(tokens);
+
+    auto call_3 = cast<ValueExpression::Call>(ValueExpression::Parse(parser));
+    auto call_2 = cast<ValueExpression::Call>(call_3->left);
+    auto call_1 = cast<ValueExpression::Call>(call_2->left);
+
+    EXPECT_EQ(cast<Atomic>(call_3->arguments[0])->value->value, "3");
+    EXPECT_EQ(cast<Atomic>(call_2->arguments[0])->value->value, "2");
+    EXPECT_EQ(cast<Atomic>(call_1->arguments[0])->value->value, "1");
+}
 
 TEST(Parser, CallParenthesis)
 {
