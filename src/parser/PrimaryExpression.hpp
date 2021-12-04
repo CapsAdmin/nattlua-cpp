@@ -87,6 +87,7 @@ class Atomic : public ValueExpression
 {
 public:
     std::unique_ptr<Token> value;
+    LuaParser::TokenType token_type;
     static std::unique_ptr<Atomic> Parse(std::shared_ptr<LuaParser> parser);
 };
 
@@ -156,4 +157,18 @@ public:
     std::unique_ptr<Expression> right;
 
     static std::unique_ptr<BinaryOperator> Parse(std::shared_ptr<LuaParser> parser);
+};
+
+class Function : public ValueExpression
+{
+public:
+    std::unique_ptr<Token> tk_function = nullptr;
+    std::unique_ptr<Token> tk_arguments_left = nullptr;
+    std::vector<std::unique_ptr<Token>> tk_argument_separators = {};
+    std::vector<std::unique_ptr<Expression>> arguments;
+    std::unique_ptr<Token> tk_arguments_right = nullptr;
+    std::vector<std::unique_ptr<Token>> tk_return_separators = {};
+    std::unique_ptr<Token> tk_end = nullptr;
+
+    static std::unique_ptr<Function> Parse(std::shared_ptr<LuaParser> parser);
 };

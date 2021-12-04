@@ -12,6 +12,7 @@ set(LIBRARY_CPP
 set(TEST_CPP 
     tests/Lexer.cpp
     tests/Parser.cpp
+    tests/Analyzer.cpp
 )
 
 set(TEST_ARGS "-O0")

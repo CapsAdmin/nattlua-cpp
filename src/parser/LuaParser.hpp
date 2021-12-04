@@ -47,6 +47,8 @@ public:
     enum TokenType
     {
         Keyword,
+        Number,
+        String,
         PrefixOperator,
         PostfixOperator,
         BinaryOperator,

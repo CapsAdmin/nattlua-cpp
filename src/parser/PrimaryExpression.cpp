@@ -9,6 +9,8 @@ std::unique_ptr<Atomic> Atomic::Parse(std::shared_ptr<LuaParser> parser)
     parser->StartNode(node.get());
     node->value = parser->ReadToken();
     parser->EndNode(node.get());
+    node->token_type = parser->GetTokenType(node->value.get());
+
     return node;
 };
 
@@ -135,10 +137,12 @@ std::unique_ptr<BinaryOperator> BinaryOperator::Parse(std::shared_ptr<LuaParser>
 
 std::unique_ptr<Expression> ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t priority)
 {
+    std::unique_ptr<Expression> node = nullptr;
+
     if (parser->IsValue("("))
     {
         auto left_paren = parser->ExpectValue("(");
-        auto node = ValueExpression::Parse(parser);
+        node = ValueExpression::Parse(parser);
         auto right_paren = parser->ExpectValue(")");
 
         if (!node)
@@ -148,17 +152,20 @@ std::unique_ptr<Expression> ValueExpression::Parse(std::shared_ptr<LuaParser> pa
 
         node->tk_left_parenthesis.push_back(std::move(left_paren)); // TODO: unshift
         node->tk_right_parenthesis.push_back(std::move(right_paren));
-
-        return node;
     }
-
-    std::unique_ptr<Expression> node = nullptr;
-
-    if (auto res = Atomic::Parse(parser))
+    else if (auto res = Atomic::Parse(parser))
     {
         node = std::move(res);
     }
     else if (auto res = Table::Parse(parser))
+    {
+        node = std::move(res);
+    }
+    else if (auto res = PrefixOperator::Parse(parser))
+    {
+        node = std::move(res);
+    }
+    else if (auto res = Function::Parse(parser))
     {
         node = std::move(res);
     }
@@ -347,6 +354,41 @@ std::unique_ptr<ValueExpression::TypeCast> ValueExpression::TypeCast::Parse(std:
     parser->StartNode(node.get());
     node->tk_operator = parser->ReadToken(); // either as or :
     node->expression = ValueExpression::Parse(parser);
+    parser->EndNode(node.get());
+
+    return node;
+}
+
+std::unique_ptr<Function> Function::Parse(std::shared_ptr<LuaParser> parser)
+{
+    if (!parser->IsValue("function"))
+        return nullptr;
+
+    auto node = std::make_unique<Function>();
+    parser->StartNode(node.get());
+
+    node->tk_function = parser->ExpectValue("function");
+    node->tk_arguments_left = parser->ExpectValue("(");
+
+    for (size_t i = 0; i < 1000; i++)
+    {
+        auto exp = ValueExpression::Parse(parser);
+        if (!exp)
+            break;
+
+        node->arguments.push_back(std::move(exp));
+
+        if (!parser->IsValue(","))
+            break;
+
+        node->tk_argument_separators.push_back(std::move(parser->ReadToken()));
+    }
+
+    node->tk_arguments_right = parser->ExpectValue(")");
+    node->tk_end = parser->ExpectValue("end");
+
+    // node->statements = parser->ParseBlock();
+
     parser->EndNode(node.get());
 
     return node;

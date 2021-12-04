@@ -28,6 +28,14 @@ LuaParser::TokenType LuaParser::GetTokenType(PeekedToken token)
         else if (runtime_syntax->IsBinaryOperator(token->value))
             return TokenType::BinaryOperator;
     }
+    else if (token->kind == Token::Kind::Number)
+    {
+        return TokenType::Number;
+    }
+    else if (token->kind == Token::Kind::String)
+    {
+        return TokenType::String;
+    }
 
     return TokenType::None;
 }

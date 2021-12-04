@@ -197,3 +197,25 @@ TEST(Parser, TypeCast)
     EXPECT_EQ(cast<Atomic>(type_cast->left.get())->value->value, "\"foo\"");
     EXPECT_EQ(cast<Atomic>(type_cast->expression.get())->value->value, "foo");
 }
+
+TEST(Parser, PrefixOperator)
+{
+    auto prefix = cast_uptr<PrefixOperator>(Parse("-1"));
+
+    EXPECT_EQ(prefix->op->value, "-");
+    EXPECT_EQ(cast<Atomic>(prefix->right.get())->value->value, "1");
+}
+
+TEST(Parser, Function)
+{
+    auto node = cast_uptr<Function>(Parse("function(a,b,c) end"));
+
+    EXPECT_EQ(node->tk_function->value, "function");
+    EXPECT_EQ(node->tk_arguments_left->value, "(");
+    EXPECT_EQ(node->arguments.size(), 3);
+    EXPECT_EQ(cast<Atomic>(node->arguments[0].get())->value->value, "a");
+    EXPECT_EQ(cast<Atomic>(node->arguments[1].get())->value->value, "b");
+    EXPECT_EQ(cast<Atomic>(node->arguments[2].get())->value->value, "c");
+    EXPECT_EQ(node->tk_arguments_right->value, ")");
+    EXPECT_EQ(node->tk_end->value, "end");
+}
