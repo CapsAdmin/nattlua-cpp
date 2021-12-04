@@ -14,11 +14,14 @@ set(TEST_CPP
     tests/Parser.cpp
 )
 
-set(TEST_ARGS
-    "-O0"
-    #"-fprofile-arcs"
-    #"-ftest-coverage"
-)
+set(TEST_ARGS "-O0")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    list(APPEND TEST_ARGS 
+        "-fprofile-arcs"
+        "-ftest-coverage"
+    )
+endif()
 
 project(main LANGUAGES CXX)
     set(CMAKE_CXX_STANDARD 20)
@@ -44,9 +47,9 @@ project(main LANGUAGES CXX)
         add_executable(tests ${TEST_CPP} ${LIBRARY_CPP})
         target_link_libraries(tests gtest_main)
         
-        if (!APPLE)
-        #    target_link_libraries(tests gcov)
-        endif (!APPLE)
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            target_link_libraries(tests gcov)
+        endif ()
 
         target_compile_options(tests PUBLIC ${TEST_ARGS})
 
