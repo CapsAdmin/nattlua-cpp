@@ -60,30 +60,6 @@ public:
     std::unique_ptr<Token> ExpectValue(const std::string &val);
     std::unique_ptr<Token> ExpectType(const Token::Kind val);
 
-    template <class T>
-    inline std::vector<T *> ReadMultipleValues(
-        const size_t max,
-        std::function<T *()> reader,
-        std::vector<std::unique_ptr<Token>> &comma_tokens)
-    {
-        std::vector<T *> out;
-
-        for (size_t i = 0; i < (max != 0 ? max : GetLength()); i++)
-        {
-            T *node = reader();
-            if (!node)
-                break;
-            out.push_back(node);
-
-            if (!IsValue(","))
-                break;
-
-            comma_tokens.push_back(ExpectValue(","));
-        }
-
-        return out;
-    };
-
     bool IsCallExpression(const uint8_t offset = 0);
     std::unique_ptr<Token> ReadToken() { return std::move(tokens[index++]); };
     PeekedToken PeekToken(size_t offset = 0) { return tokens[index + offset].get(); };

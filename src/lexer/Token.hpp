@@ -38,7 +38,6 @@ public:
     };
     ~Token()
     {
-        printf("Token::~Token()\n");
     }
     inline bool IsWhitespace()
     {

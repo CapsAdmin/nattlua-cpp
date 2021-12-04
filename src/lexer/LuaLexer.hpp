@@ -10,7 +10,6 @@ public:
     }
     ~LuaLexer()
     {
-        printf("LuaLexer::~LuaLexer()\n");
     }
 
     std::unique_ptr<Token> ReadNonWhitespaceToken() override;

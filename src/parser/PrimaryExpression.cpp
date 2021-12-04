@@ -1,67 +1,67 @@
 #include "./PrimaryExpression.hpp"
 
-Atomic *Atomic::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<Atomic> Atomic::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsTokenValue(parser->PeekToken()))
         return nullptr;
 
-    auto node = new Atomic();
-    parser->StartNode(node);
+    auto node = std::make_unique<Atomic>();
+    parser->StartNode(node.get());
     node->value = parser->ReadToken();
-    parser->EndNode(node);
+    parser->EndNode(node.get());
     return node;
 };
 
-Table::IdentifierKeyValue *Table::IdentifierKeyValue::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<Table::IdentifierKeyValue> Table::IdentifierKeyValue::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsType(Token::Kind::Letter) || !parser->IsValue("=", 1))
         return nullptr;
 
-    auto node = new IdentifierKeyValue();
-    parser->StartNode(node);
+    auto node = std::make_unique<IdentifierKeyValue>();
+    parser->StartNode(node.get());
     node->key = parser->ExpectType(Token::Kind::Letter);
     node->tk_equal = parser->ExpectValue("=");
     node->val = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
     return node;
 }
 
-Table::ExpressionKeyValue *Table::ExpressionKeyValue::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<Table::ExpressionKeyValue> Table::ExpressionKeyValue::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("["))
         return nullptr;
 
-    auto node = new ExpressionKeyValue();
-    parser->StartNode(node);
+    auto node = std::make_unique<ExpressionKeyValue>();
+    parser->StartNode(node.get());
     node->tk_left_bracket = parser->ExpectValue("[");
     node->key = ValueExpression::Parse(parser);
     node->tk_right_bracket = parser->ExpectValue("]");
     node->tk_equal = parser->ExpectValue("=");
     node->val = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 };
 
-Table::IndexValue *Table::IndexValue::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<Table::IndexValue> Table::IndexValue::Parse(std::shared_ptr<LuaParser> parser)
 {
-    auto node = new IndexValue();
-    parser->StartNode(node);
+    auto node = std::make_unique<IndexValue>();
+    parser->StartNode(node.get());
     node->val = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
 
-Table *Table::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<Table> Table::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("{"))
         return nullptr;
 
-    auto tree = new Table();
-    parser->StartNode(tree);
+    auto node = std::make_unique<Table>();
+    parser->StartNode(node.get());
 
-    tree->tk_left_bracket = parser->ExpectValue("{");
+    node->tk_left_bracket = parser->ExpectValue("{");
 
     size_t index = 0;
 
@@ -70,23 +70,23 @@ Table *Table::Parse(std::shared_ptr<LuaParser> parser)
         if (parser->IsValue("}"))
             break;
 
-        Child *child = nullptr;
+        std::unique_ptr<Child> child = nullptr;
 
         if (auto res = ExpressionKeyValue::Parse(parser))
         {
-            child = res;
+            child = std::move(res);
         }
         else if (auto res = IdentifierKeyValue::Parse(parser))
         {
-            child = res;
+            child = std::move(res);
         }
         else if (auto res = IndexValue::Parse(parser))
         {
             res->key = index;
-            child = res;
+            child = std::move(res);
         }
 
-        tree->children.push_back(child);
+        node->children.push_back(std::move(child));
 
         if (!parser->IsValue(",") && !parser->IsValue(";") && !parser->IsValue("}"))
         {
@@ -94,46 +94,46 @@ Table *Table::Parse(std::shared_ptr<LuaParser> parser)
         }
 
         if (!parser->IsValue("}"))
-            tree->tk_separators.push_back(parser->ExpectValue(","));
+            node->tk_separators.push_back(parser->ExpectValue(","));
 
         index++;
     }
 
-    tree->tk_right_bracket = parser->ExpectValue("}");
+    node->tk_right_bracket = parser->ExpectValue("}");
 
-    parser->EndNode(tree);
+    parser->EndNode(node.get());
 
-    return tree;
+    return node;
 };
 
-PrefixOperator *PrefixOperator::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<PrefixOperator> PrefixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsPrefixOperator(parser->PeekToken()->value))
         return nullptr;
 
-    auto node = new PrefixOperator();
-    parser->StartNode(node);
+    auto node = std::make_unique<PrefixOperator>();
+    parser->StartNode(node.get());
     node->op = parser->ReadToken();
     node->right = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
     return node;
 };
 
-BinaryOperator *BinaryOperator::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<BinaryOperator> BinaryOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsBinaryOperator(parser->PeekToken()->value))
         return nullptr;
 
-    auto node = new BinaryOperator();
-    parser->StartNode(node);
+    auto node = std::make_unique<BinaryOperator>();
+    parser->StartNode(node.get());
     node->left = ValueExpression::Parse(parser);
     node->op = parser->ReadToken();
     node->right = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
     return node;
 };
 
-Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t priority)
+std::unique_ptr<Expression> ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t priority)
 {
     if (parser->IsValue("("))
     {
@@ -152,44 +152,44 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
         return node;
     }
 
-    Expression *node = nullptr;
+    std::unique_ptr<Expression> node = nullptr;
 
     if (auto res = Atomic::Parse(parser))
     {
-        node = res;
+        node = std::move(res);
     }
     else if (auto res = Table::Parse(parser))
     {
-        node = res;
+        node = std::move(res);
     }
 
     while (node)
     {
-        PostfixExpression *sub = nullptr;
+        std::unique_ptr<PostfixExpression> sub = nullptr;
 
         if (auto res = Index::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
         else if (auto res = SelfCall::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
         else if (auto res = Call::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
         else if (auto res = PostfixOperator::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
         else if (auto res = IndexExpression::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
         else if (auto res = TypeCast::Parse(parser))
         {
-            sub = res;
+            sub = std::move(res);
         }
 
         if (!sub)
@@ -197,8 +197,8 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
             break;
         }
 
-        sub->left = node;
-        node = sub;
+        sub->left = std::move(node);
+        node = std::move(sub);
     }
 
     // check integer
@@ -209,13 +209,13 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
         if (!info || info->left_priority < priority)
             break;
 
-        auto left_node = node;
+        auto left_node = std::move(node);
 
-        auto binary = new BinaryOperator();
-        parser->StartNode(binary);
+        auto binary = std::make_unique<BinaryOperator>();
+        parser->StartNode(binary.get());
         binary->op = parser->ReadToken();
-        binary->left = left_node;
-        binary->left->parent = node;
+        binary->left = std::move(left_node);
+        binary->left->parent = node.get();
 
         binary->right = ValueExpression::Parse(parser, info->right_priority);
 
@@ -228,51 +228,51 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
                 token);
         }
 
-        parser->EndNode(binary);
+        parser->EndNode(binary.get());
 
-        node = binary;
+        node = std::move(binary);
     }
 
     return node;
 }
 
-ValueExpression::Index *ValueExpression::Index::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::Index> ValueExpression::Index::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue(".") || !parser->IsType(Token::Kind::Letter, 1))
         return nullptr;
 
-    auto *node = new Index();
-    parser->StartNode(node);
+    auto node = std::make_unique<Index>();
+    parser->StartNode(node.get());
     node->op = parser->ReadToken();
     node->right = Atomic::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
 
-ValueExpression::SelfCall *ValueExpression::SelfCall::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::SelfCall> ValueExpression::SelfCall::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!(parser->IsValue(":") && parser->IsType(Token::Kind::Letter, 1) && parser->IsCallExpression(2)))
         return nullptr;
 
-    auto *node = new SelfCall();
-    parser->StartNode(node);
+    auto node = std::make_unique<SelfCall>();
+    parser->StartNode(node.get());
     node->op = parser->ReadToken();
 
     node->right = Atomic::Parse(parser);
 
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
 
-ValueExpression::Call *ValueExpression::Call::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::Call> ValueExpression::Call::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsCallExpression(0))
         return nullptr;
 
-    auto node = new Call();
-    parser->StartNode(node);
+    auto node = std::make_unique<Call>();
+    parser->StartNode(node.get());
 
     if (parser->IsValue("{"))
     {
@@ -285,15 +285,20 @@ ValueExpression::Call *ValueExpression::Call::Parse(std::shared_ptr<LuaParser> p
     else if (parser->IsValue("("))
     {
         node->tk_arguments_left = parser->ReadToken();
-        auto values = parser->ReadMultipleValues<ValueExpression>(
-            1000,
-            [parser]()
-            {
-                return Atomic::Parse(parser);
-            },
-            node->tk_comma);
 
-        node->arguments.insert(node->arguments.end(), values.begin(), values.end());
+        for (size_t i = 0; i < 1000; i++)
+        {
+            auto value = Atomic::Parse(parser);
+            if (!value)
+                break;
+
+            node->arguments.push_back(std::move(value));
+
+            if (!parser->IsValue(","))
+                break;
+
+            node->tk_comma.push_back(parser->ExpectValue(","));
+        }
 
         node->tk_arguments_right = parser->ReadToken();
     }
@@ -301,48 +306,48 @@ ValueExpression::Call *ValueExpression::Call::Parse(std::shared_ptr<LuaParser> p
     return node;
 }
 
-ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::PostfixOperator> ValueExpression::PostfixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsPostfixOperator(parser->PeekToken()->value))
         return nullptr;
 
-    auto node = new PostfixOperator();
-    parser->StartNode(node);
+    auto node = std::make_unique<PostfixOperator>();
+    parser->StartNode(node.get());
     node->op = parser->ReadToken();
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
 
-ValueExpression::IndexExpression *ValueExpression::IndexExpression::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::IndexExpression> ValueExpression::IndexExpression::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("["))
         return nullptr;
 
-    auto *node = new IndexExpression();
-    parser->StartNode(node);
+    auto node = std::make_unique<IndexExpression>();
+    parser->StartNode(node.get());
 
     node->tk_left_bracket = parser->ReadToken();
     node->index = ValueExpression::Parse(parser);
     node->tk_right_bracket = parser->ReadToken();
 
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
 
-ValueExpression::TypeCast *ValueExpression::TypeCast::Parse(std::shared_ptr<LuaParser> parser)
+std::unique_ptr<ValueExpression::TypeCast> ValueExpression::TypeCast::Parse(std::shared_ptr<LuaParser> parser)
 {
     if ((!parser->IsValue(":") || (parser->IsType(Token::Kind::Letter, 1) || parser->IsCallExpression(2))) && !parser->IsValue("as"))
     {
         return nullptr;
     }
 
-    auto *node = new TypeCast();
-    parser->StartNode(node);
+    auto node = std::make_unique<TypeCast>();
+    parser->StartNode(node.get());
     node->tk_operator = parser->ReadToken(); // either as or :
     node->expression = ValueExpression::Parse(parser);
-    parser->EndNode(node);
+    parser->EndNode(node.get());
 
     return node;
 }
