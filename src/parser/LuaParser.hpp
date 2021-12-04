@@ -5,6 +5,8 @@
 #include "../syntax/TypesystemSyntax.hpp"
 #include "./ParserNode.hpp"
 
+using PeekedToken = Token *;
+
 class LuaParser
 {
 public:
@@ -12,11 +14,11 @@ public:
     {
     private:
         std::string message;
-        Token *start;
-        Token *stop;
+        PeekedToken start;
+        PeekedToken stop;
 
     public:
-        explicit Exception(const std::string &message, Token *start_token, Token *stop_token)
+        explicit Exception(const std::string &message, PeekedToken start_token, PeekedToken stop_token)
         {
             this->message = message;
 
@@ -50,8 +52,8 @@ public:
         BinaryOperator,
         None,
     };
-    TokenType GetTokenType(Token *token);
-    bool IsTokenValue(Token *token);
+    TokenType GetTokenType(PeekedToken token);
+    bool IsTokenValue(PeekedToken token);
 
     bool IsValue(const std::string &val, const uint8_t offset = 0);
     bool IsType(const Token::Kind val, const uint8_t offset = 0);
@@ -84,7 +86,7 @@ public:
 
     bool IsCallExpression(const uint8_t offset = 0);
     std::unique_ptr<Token> ReadToken() { return std::move(tokens[index++]); };
-    Token *PeekToken(size_t offset = 0) { return tokens[index + offset].get(); };
+    PeekedToken PeekToken(size_t offset = 0) { return tokens[index + offset].get(); };
     void StartNode(ParserNode *node){};
     void EndNode(ParserNode *node){};
     inline size_t GetLength() { return tokens.size(); }

@@ -1,6 +1,6 @@
 #include "./LuaParser.hpp"
 
-bool LuaParser::IsTokenValue(Token *token)
+bool LuaParser::IsTokenValue(PeekedToken token)
 {
     if (token->kind == Token::Kind::Number || token->kind == Token::Kind::String)
         return true;
@@ -13,7 +13,7 @@ bool LuaParser::IsTokenValue(Token *token)
     return false;
 }
 
-LuaParser::TokenType LuaParser::GetTokenType(Token *token)
+LuaParser::TokenType LuaParser::GetTokenType(PeekedToken token)
 {
     if (token->kind == Token::Kind::Letter && runtime_syntax->IsKeyword(token->value))
     {
