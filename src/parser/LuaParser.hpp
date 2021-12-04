@@ -55,9 +55,9 @@ public:
     TokenType GetTokenType(PeekedToken token);
     bool IsTokenValue(PeekedToken token);
 
-    bool IsValue(const std::string &val, const uint8_t offset = 0);
+    bool IsValue(std::string_view val, const uint8_t offset = 0);
     bool IsType(const Token::Kind val, const uint8_t offset = 0);
-    std::unique_ptr<Token> ExpectValue(const std::string &val);
+    std::unique_ptr<Token> ExpectValue(std::string_view val);
     std::unique_ptr<Token> ExpectType(const Token::Kind val);
 
     bool IsCallExpression(const uint8_t offset = 0);

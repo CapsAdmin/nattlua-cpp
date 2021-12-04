@@ -15,6 +15,6 @@ public:
     ~Code();
     size_t GetByteSize();
     std::string_view GetStringSlice(size_t start, size_t end);
-    std::optional<size_t> FindNearest(std::string pattern, size_t from);
+    std::optional<size_t> FindNearest(std::string_view pattern, size_t from);
     uint8_t GetByte(size_t index);
 };

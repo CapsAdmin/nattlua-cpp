@@ -11,7 +11,7 @@ uint8_t BaseLexer::GetByte(size_t offset)
     return code->GetByte(position + offset);
 }
 
-bool BaseLexer::IsString(const std::string &value, const size_t relative_offset)
+bool BaseLexer::IsString(std::string_view value, const size_t relative_offset)
 {
     auto l = code->GetStringSlice(position + relative_offset, position + relative_offset + value.size());
 
@@ -24,7 +24,7 @@ void BaseLexer::ResetState()
     position = 0;
 }
 
-std::optional<size_t> BaseLexer::FindNearest(std::string pattern)
+std::optional<size_t> BaseLexer::FindNearest(std::string_view pattern)
 {
     return code->FindNearest(pattern, position);
 }

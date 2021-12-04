@@ -37,7 +37,7 @@ LuaParser::LuaParser(std::vector<std::unique_ptr<Token>> tokens)
     this->tokens = std::move(tokens);
 }
 
-bool LuaParser::IsValue(const std::string &val, const uint8_t offset)
+bool LuaParser::IsValue(std::string_view val, const uint8_t offset)
 {
     return PeekToken(offset)->value == val;
 }
@@ -47,10 +47,10 @@ bool LuaParser::IsType(const Token::Kind val, const uint8_t offset)
     return PeekToken(offset)->kind == val;
 }
 
-std::unique_ptr<Token> LuaParser::ExpectValue(const std::string &val)
+std::unique_ptr<Token> LuaParser::ExpectValue(std::string_view val)
 {
     if (!IsValue(val))
-        throw Exception("Expected value: " + val, PeekToken(), PeekToken());
+        throw Exception("Expected value: " + std::string(val), PeekToken(), PeekToken());
 
     return ReadToken();
 }

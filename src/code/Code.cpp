@@ -18,7 +18,7 @@ std::string_view Code::GetStringSlice(size_t start, size_t end)
     return buffer.substr(start, end - start);
 }
 
-std::optional<size_t> Code::FindNearest(std::string pattern, size_t from)
+std::optional<size_t> Code::FindNearest(std::string_view pattern, size_t from)
 {
     auto pos = buffer.find_first_of(pattern, from);
 

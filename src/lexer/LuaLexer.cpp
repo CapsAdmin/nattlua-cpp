@@ -181,19 +181,19 @@ std::unique_ptr<Token> LuaLexer::ReadParserDebugCode()
     return std::make_unique<Token>(Token::Kind::ParserDebugCode);
 }
 
-bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
+bool ReadNumberExponent(LuaLexer &lexer, std::string_view what)
 {
     // skip the 'e', 'E', 'p' or 'P'
     lexer.position += 1;
 
     if (!lexer.IsString("+") && !lexer.IsString("-"))
-        throw BaseLexer::Exception("expected + or - after " + what + ", got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 1, lexer.position);
+        throw BaseLexer::Exception("expected + or - after " + std::string(what) + ", got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 1, lexer.position);
 
     // skip the '+' or '-'
     lexer.position += 1;
 
     if (!IsNumber(lexer.GetByte()))
-        throw BaseLexer::Exception("malformed '" + what + "' expected number, got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 2, lexer.position - 1);
+        throw BaseLexer::Exception("malformed '" + std::string(what) + "' expected number, got " + std::string(lexer.GetRelativeStringSlice(0, 1)), lexer.position - 2, lexer.position - 1);
 
     while (!lexer.TheEnd())
     {
