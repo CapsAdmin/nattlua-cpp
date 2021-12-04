@@ -78,5 +78,8 @@
     },
     "cSpell.words": [
         "smatch"
+    ],
+    "gcovViewer.buildDirectories": [
+        "${workspaceFolder}/build/CMakeFiles/"
     ]
 }
