@@ -1,6 +1,6 @@
 #include "./PrimaryExpression.hpp"
 
-Atomic *Atomic::Parse(LuaParser *parser)
+Atomic *Atomic::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsTokenValue(parser->GetToken()))
         return nullptr;
@@ -12,12 +12,12 @@ Atomic *Atomic::Parse(LuaParser *parser)
     return node;
 };
 
-Table::KeyValue *Table::KeyValue::Parse(LuaParser *parser)
+Table::IdentifierKeyValue *Table::IdentifierKeyValue::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsType(Token::Kind::Letter) || !parser->IsValue("=", 1))
         return nullptr;
 
-    auto node = new KeyValue();
+    auto node = new IdentifierKeyValue();
     parser->StartNode(node);
     node->key = parser->ExpectType(Token::Kind::Letter);
     node->tk_equal = parser->ExpectValue("=");
@@ -26,12 +26,12 @@ Table::KeyValue *Table::KeyValue::Parse(LuaParser *parser)
     return node;
 }
 
-Table::KeyExpressionValue *Table::KeyExpressionValue::Parse(LuaParser *parser)
+Table::ExpressionKeyValue *Table::ExpressionKeyValue::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("["))
         return nullptr;
 
-    auto node = new KeyExpressionValue();
+    auto node = new ExpressionKeyValue();
     parser->StartNode(node);
     node->tk_left_bracket = parser->ExpectValue("[");
     node->key = ValueExpression::Parse(parser);
@@ -43,7 +43,7 @@ Table::KeyExpressionValue *Table::KeyExpressionValue::Parse(LuaParser *parser)
     return node;
 };
 
-Table::IndexValue *Table::IndexValue::Parse(LuaParser *parser)
+Table::IndexValue *Table::IndexValue::Parse(std::shared_ptr<LuaParser> parser)
 {
     auto node = new IndexValue();
     parser->StartNode(node);
@@ -53,7 +53,7 @@ Table::IndexValue *Table::IndexValue::Parse(LuaParser *parser)
     return node;
 }
 
-Table *Table::Parse(LuaParser *parser)
+Table *Table::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("{"))
         return nullptr;
@@ -72,11 +72,11 @@ Table *Table::Parse(LuaParser *parser)
 
         Child *child = nullptr;
 
-        if (auto res = KeyExpressionValue::Parse(parser))
+        if (auto res = ExpressionKeyValue::Parse(parser))
         {
             child = res;
         }
-        else if (auto res = KeyValue::Parse(parser))
+        else if (auto res = IdentifierKeyValue::Parse(parser))
         {
             child = res;
         }
@@ -106,7 +106,7 @@ Table *Table::Parse(LuaParser *parser)
     return tree;
 };
 
-PrefixOperator *PrefixOperator::Parse(LuaParser *parser)
+PrefixOperator *PrefixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsPrefixOperator(parser->GetToken()->value))
         return nullptr;
@@ -119,7 +119,7 @@ PrefixOperator *PrefixOperator::Parse(LuaParser *parser)
     return node;
 };
 
-BinaryOperator *BinaryOperator::Parse(LuaParser *parser)
+BinaryOperator *BinaryOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsBinaryOperator(parser->GetToken()->value))
         return nullptr;
@@ -133,7 +133,7 @@ BinaryOperator *BinaryOperator::Parse(LuaParser *parser)
     return node;
 };
 
-Expression *ValueExpression::Parse(LuaParser *parser, size_t priority)
+Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t priority)
 {
     if (parser->IsValue("("))
     {
@@ -146,8 +146,8 @@ Expression *ValueExpression::Parse(LuaParser *parser, size_t priority)
             throw LuaParser::Exception("Empty parentheses group", parser->GetToken(), parser->GetToken());
         }
 
-        node->tk_left_parenthesis.push_back(left_paren); // TODO: unshift
-        node->tk_right_parenthesis.push_back(right_paren);
+        node->tk_left_parenthesis.push_back(std::move(left_paren)); // TODO: unshift
+        node->tk_right_parenthesis.push_back(std::move(right_paren));
 
         return node;
     }
@@ -236,7 +236,7 @@ Expression *ValueExpression::Parse(LuaParser *parser, size_t priority)
     return node;
 }
 
-ValueExpression::Index *ValueExpression::Index::Parse(LuaParser *parser)
+ValueExpression::Index *ValueExpression::Index::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue(".") || !parser->IsType(Token::Kind::Letter, 1))
         return nullptr;
@@ -250,7 +250,7 @@ ValueExpression::Index *ValueExpression::Index::Parse(LuaParser *parser)
     return node;
 }
 
-ValueExpression::SelfCall *ValueExpression::SelfCall::Parse(LuaParser *parser)
+ValueExpression::SelfCall *ValueExpression::SelfCall::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!(parser->IsValue(":") && parser->IsType(Token::Kind::Letter, 1) && parser->IsCallExpression(2)))
         return nullptr;
@@ -266,7 +266,7 @@ ValueExpression::SelfCall *ValueExpression::SelfCall::Parse(LuaParser *parser)
     return node;
 }
 
-ValueExpression::Call *ValueExpression::Call::Parse(LuaParser *parser)
+ValueExpression::Call *ValueExpression::Call::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsCallExpression(0))
         return nullptr;
@@ -301,7 +301,7 @@ ValueExpression::Call *ValueExpression::Call::Parse(LuaParser *parser)
     return node;
 }
 
-ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(LuaParser *parser)
+ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->runtime_syntax->IsPostfixOperator(parser->GetToken()->value))
         return nullptr;
@@ -314,7 +314,7 @@ ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(LuaPar
     return node;
 }
 
-ValueExpression::IndexExpression *ValueExpression::IndexExpression::Parse(LuaParser *parser)
+ValueExpression::IndexExpression *ValueExpression::IndexExpression::Parse(std::shared_ptr<LuaParser> parser)
 {
     if (!parser->IsValue("["))
         return nullptr;
@@ -331,7 +331,7 @@ ValueExpression::IndexExpression *ValueExpression::IndexExpression::Parse(LuaPar
     return node;
 }
 
-ValueExpression::TypeCast *ValueExpression::TypeCast::Parse(LuaParser *parser)
+ValueExpression::TypeCast *ValueExpression::TypeCast::Parse(std::shared_ptr<LuaParser> parser)
 {
     if ((!parser->IsValue(":") || (parser->IsType(Token::Kind::Letter, 1) || parser->IsCallExpression(2))) && !parser->IsValue("as"))
     {

@@ -7,17 +7,17 @@
 class Expression : public ParserNode
 {
 public:
-    std::vector<Token *> tk_left_parenthesis = {};
-    std::vector<Token *> tk_right_parenthesis = {};
+    std::vector<std::shared_ptr<Token>> tk_left_parenthesis = {};
+    std::vector<std::shared_ptr<Token>> tk_right_parenthesis = {};
 
-    Token *tk_type_colon_assignment = nullptr;
-    Token *tk_type_as_assignment = nullptr;
+    std::shared_ptr<Token> tk_type_colon_assignment = nullptr;
+    std::shared_ptr<Token> tk_type_as_assignment = nullptr;
 };
 
 class ValueExpression : public Expression
 {
 public:
-    static Expression *Parse(LuaParser *parser, size_t priority = 0);
+    static Expression *Parse(std::shared_ptr<LuaParser> parser, size_t priority = 0);
 
     class PostfixExpression : public Expression
     {
@@ -27,19 +27,19 @@ public:
     class Index : public PostfixExpression
     {
     public:
-        Token *op;
+        std::shared_ptr<Token> op;
         Expression *right;
 
-        static Index *Parse(LuaParser *parser);
+        static Index *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class SelfCall : public PostfixExpression
     {
     public:
-        Token *op;
+        std::shared_ptr<Token> op;
         Expression *right;
 
-        static SelfCall *Parse(LuaParser *parser);
+        static SelfCall *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class Call : public PostfixExpression
@@ -47,19 +47,19 @@ public:
     public:
         std::vector<Expression *> arguments = {};
 
-        Token *tk_arguments_left = nullptr;
-        Token *tk_arguments_right = nullptr;
-        std::vector<Token *> tk_comma = {};
-        Token *tk_type_call = nullptr;
+        std::shared_ptr<Token> tk_arguments_left = nullptr;
+        std::shared_ptr<Token> tk_arguments_right = nullptr;
+        std::vector<std::shared_ptr<Token>> tk_comma = {};
+        std::shared_ptr<Token> tk_type_call = nullptr;
 
-        static Call *Parse(LuaParser *parser);
+        static Call *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class PostfixOperator : public PostfixExpression
     {
     public:
-        Token *op;
-        static PostfixOperator *Parse(LuaParser *parser);
+        std::shared_ptr<Token> op;
+        static PostfixOperator *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class IndexExpression : public PostfixExpression
@@ -67,27 +67,27 @@ public:
     public:
         Expression *index = nullptr;
 
-        Token *tk_left_bracket = nullptr;
-        Token *tk_right_bracket = nullptr;
+        std::shared_ptr<Token> tk_left_bracket = nullptr;
+        std::shared_ptr<Token> tk_right_bracket = nullptr;
 
-        static IndexExpression *Parse(LuaParser *parser);
+        static IndexExpression *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class TypeCast : public PostfixExpression
     {
     public:
         Expression *expression;
-        Token *tk_operator = nullptr;
+        std::shared_ptr<Token> tk_operator = nullptr;
 
-        static TypeCast *Parse(LuaParser *parser);
+        static TypeCast *Parse(std::shared_ptr<LuaParser> parser);
     };
 };
 
 class Atomic : public ValueExpression
 {
 public:
-    Token *value;
-    static Atomic *Parse(LuaParser *parser);
+    std::shared_ptr<Token> value;
+    static Atomic *Parse(std::shared_ptr<LuaParser> parser);
 };
 
 class Table : public ValueExpression
@@ -97,28 +97,28 @@ public:
     {
     };
 
-    class KeyValue : public Child
+    class IdentifierKeyValue : public Child
     {
     public:
-        Token *key = nullptr;
+        std::shared_ptr<Token> key = nullptr;
         Expression *val = nullptr;
 
-        Token *tk_equal = nullptr;
+        std::shared_ptr<Token> tk_equal = nullptr;
 
-        static KeyValue *Parse(LuaParser *parser);
+        static IdentifierKeyValue *Parse(std::shared_ptr<LuaParser> parser);
     };
 
-    class KeyExpressionValue : public Child
+    class ExpressionKeyValue : public Child
     {
     public:
         Expression *key = nullptr;
         Expression *val = nullptr;
 
-        Token *tk_equal = nullptr;
-        Token *tk_left_bracket = nullptr;
-        Token *tk_right_bracket = nullptr;
+        std::shared_ptr<Token> tk_equal = nullptr;
+        std::shared_ptr<Token> tk_left_bracket = nullptr;
+        std::shared_ptr<Token> tk_right_bracket = nullptr;
 
-        static KeyExpressionValue *Parse(LuaParser *parser);
+        static ExpressionKeyValue *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     class IndexValue : public Child
@@ -127,33 +127,33 @@ public:
         uint64_t key = 0;
         Expression *val = nullptr;
 
-        static IndexValue *Parse(LuaParser *parser);
+        static IndexValue *Parse(std::shared_ptr<LuaParser> parser);
     };
 
     std::vector<Child *> children = {};
 
-    Token *tk_left_bracket = nullptr;
-    Token *tk_right_bracket = nullptr;
-    std::vector<Token *> tk_separators = {};
+    std::shared_ptr<Token> tk_left_bracket = nullptr;
+    std::shared_ptr<Token> tk_right_bracket = nullptr;
+    std::vector<std::shared_ptr<Token>> tk_separators = {};
 
-    static Table *Parse(LuaParser *parser);
+    static Table *Parse(std::shared_ptr<LuaParser> parser);
 };
 
 class PrefixOperator : public ValueExpression
 {
 public:
-    Token *op;
+    std::shared_ptr<Token> op;
     Expression *right;
 
-    static PrefixOperator *Parse(LuaParser *parser);
+    static PrefixOperator *Parse(std::shared_ptr<LuaParser> parser);
 };
 
 class BinaryOperator : public ValueExpression
 {
 public:
-    Token *op;
+    std::shared_ptr<Token> op;
     Expression *left;
     Expression *right;
 
-    static BinaryOperator *Parse(LuaParser *parser);
+    static BinaryOperator *Parse(std::shared_ptr<LuaParser> parser);
 };

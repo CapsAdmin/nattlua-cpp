@@ -1,7 +1,7 @@
 #include "./LuaLexer.hpp"
 #include "../syntax/CharacterClasses.hpp"
 
-Token *LuaLexer::ReadSpace()
+std::unique_ptr<Token> LuaLexer::ReadSpace()
 {
     if (!IsSpace(GetByte()))
         return nullptr;
@@ -14,10 +14,10 @@ Token *LuaLexer::ReadSpace()
             break;
     }
 
-    return new Token(Token::Kind::Space);
+    return std::make_unique<Token>(Token::Kind::Space);
 }
 
-Token *LuaLexer::ReadLetter()
+std::unique_ptr<Token> LuaLexer::ReadLetter()
 {
     if (!IsLetter(GetByte()))
         return nullptr;
@@ -30,18 +30,18 @@ Token *LuaLexer::ReadLetter()
             break;
     }
 
-    return new Token(Token::Kind::Letter);
+    return std::make_unique<Token>(Token::Kind::Letter);
 }
 
-Token *LuaLexer::ReadSymbol()
+std::unique_ptr<Token> LuaLexer::ReadSymbol()
 {
     if (!ReadFirstFromStringArray(runtime_syntax->GetSymbols()) && !ReadFirstFromStringArray(typesystem_syntax->GetSymbols()))
         return nullptr;
 
-    return new Token(Token::Kind::Symbol);
+    return std::make_unique<Token>(Token::Kind::Symbol);
 }
 
-Token *LuaLexer::ReadMultilineCComment()
+std::unique_ptr<Token> LuaLexer::ReadMultilineCComment()
 {
     if (!IsString("/*"))
         return nullptr;
@@ -54,7 +54,7 @@ Token *LuaLexer::ReadMultilineCComment()
         if (IsString("*/"))
         {
             position += 2;
-            return new Token(Token::Kind::MultilineComment);
+            return std::make_unique<Token>(Token::Kind::MultilineComment);
         }
 
         position += 1;
@@ -63,7 +63,7 @@ Token *LuaLexer::ReadMultilineCComment()
     throw BaseLexer::Exception("expected multiline C comment to end, reached end of code", start, position);
 }
 
-Token *LuaLexer::ReadLineComment()
+std::unique_ptr<Token> LuaLexer::ReadLineComment()
 {
     if (!IsString("--"))
         return nullptr;
@@ -78,10 +78,10 @@ Token *LuaLexer::ReadLineComment()
         position += 1;
     }
 
-    return new Token(Token::Kind::LineComment);
+    return std::make_unique<Token>(Token::Kind::LineComment);
 }
 
-Token *LuaLexer::ReadLineCComment()
+std::unique_ptr<Token> LuaLexer::ReadLineCComment()
 {
     if (!IsString("//"))
         return nullptr;
@@ -96,7 +96,7 @@ Token *LuaLexer::ReadLineCComment()
         position += 1;
     }
 
-    return new Token(Token::Kind::LineComment);
+    return std::make_unique<Token>(Token::Kind::LineComment);
 }
 
 std::string repeat(const std::string &input, size_t num)
@@ -106,7 +106,7 @@ std::string repeat(const std::string &input, size_t num)
     return os.str();
 }
 
-Token *LuaLexer::ReadMultilineComment()
+std::unique_ptr<Token> LuaLexer::ReadMultilineComment()
 {
     if (!IsString("--[") || (!IsString("[", 3) && !IsString("=", 3)))
         return nullptr;
@@ -137,7 +137,7 @@ Token *LuaLexer::ReadMultilineComment()
     if (pos2.has_value())
     {
         position = pos2.value() + closing.size();
-        return new Token(Token::Kind::MultilineComment);
+        return std::make_unique<Token>(Token::Kind::MultilineComment);
     }
 
     position = start + 2;
@@ -145,7 +145,7 @@ Token *LuaLexer::ReadMultilineComment()
     throw BaseLexer::Exception("expected multiline comment to end, reached end of code", start, start + 1);
 }
 
-Token *LuaLexer::ReadAnalyzerDebugCode()
+std::unique_ptr<Token> LuaLexer::ReadAnalyzerDebugCode()
 {
     if (!IsString("§"))
         return nullptr;
@@ -160,10 +160,10 @@ Token *LuaLexer::ReadAnalyzerDebugCode()
         position += 1;
     }
 
-    return new Token(Token::Kind::AnalyzerDebugCode);
+    return std::make_unique<Token>(Token::Kind::AnalyzerDebugCode);
 }
 
-Token *LuaLexer::ReadParserDebugCode()
+std::unique_ptr<Token> LuaLexer::ReadParserDebugCode()
 {
     if (!IsString("£"))
         return nullptr;
@@ -178,7 +178,7 @@ Token *LuaLexer::ReadParserDebugCode()
         position += 1;
     }
 
-    return new Token(Token::Kind::ParserDebugCode);
+    return std::make_unique<Token>(Token::Kind::ParserDebugCode);
 }
 
 bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
@@ -206,7 +206,7 @@ bool ReadNumberExponent(LuaLexer &lexer, const std::string &what)
     return true;
 }
 
-Token *LuaLexer::ReadHexNumber()
+std::unique_ptr<Token> LuaLexer::ReadHexNumber()
 {
     if (!IsString("0") || (!IsString("x", 1) && !IsString("X", 1)))
         return nullptr;
@@ -244,10 +244,10 @@ Token *LuaLexer::ReadHexNumber()
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(Token::Kind::Number);
+    return std::make_unique<Token>(Token::Kind::Number);
 }
 
-Token *LuaLexer::ReadBinaryNumber()
+std::unique_ptr<Token> LuaLexer::ReadBinaryNumber()
 {
     if (!IsString("0") || (!IsString("b", 1) && !IsString("B", 1)))
         return nullptr;
@@ -281,10 +281,10 @@ Token *LuaLexer::ReadBinaryNumber()
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(Token::Kind::Number);
+    return std::make_unique<Token>(Token::Kind::Number);
 }
 
-Token *LuaLexer::ReadDecimalNumber()
+std::unique_ptr<Token> LuaLexer::ReadDecimalNumber()
 {
     if (!IsNumber(GetByte()) && (!IsString(".") || !IsNumber(GetByte(1))))
         return nullptr;
@@ -335,10 +335,10 @@ Token *LuaLexer::ReadDecimalNumber()
 
     ReadFirstFromStringArray(runtime_syntax->GetNumberAnnotations());
 
-    return new Token(Token::Kind::Number);
+    return std::make_unique<Token>(Token::Kind::Number);
 }
 
-Token *LuaLexer::ReadMultilineString()
+std::unique_ptr<Token> LuaLexer::ReadMultilineString()
 {
     if (!IsString("[", 0) || (!IsString("[", 1) && !IsString("=", 1)))
         return nullptr;
@@ -368,13 +368,13 @@ Token *LuaLexer::ReadMultilineString()
     if (pos2.has_value())
     {
         position = pos2.value() + closing.size();
-        return new Token(Token::Kind::String);
+        return std::make_unique<Token>(Token::Kind::String);
     }
 
     throw BaseLexer::Exception("expected multiline string to end, reached end of code", start, position);
 }
 
-Token *ReadQuotedString(LuaLexer &lexer, const char quote)
+std::unique_ptr<Token> ReadQuotedString(LuaLexer &lexer, const char quote)
 {
     if (lexer.GetByte() != quote)
         return nullptr;
@@ -399,24 +399,24 @@ Token *ReadQuotedString(LuaLexer &lexer, const char quote)
         }
         else if (byte == quote)
         {
-            return new Token(Token::Kind::String);
+            return std::make_unique<Token>(Token::Kind::String);
         }
     }
 
     throw BaseLexer::Exception("expected ending " + std::string(1, quote) + " quote, reached end of code", start, lexer.position - 1);
 }
 
-Token *LuaLexer::ReadSingleQuotedString()
+std::unique_ptr<Token> LuaLexer::ReadSingleQuotedString()
 {
     return ReadQuotedString(*this, '\'');
 }
 
-Token *LuaLexer::ReadDoubleQuotedString()
+std::unique_ptr<Token> LuaLexer::ReadDoubleQuotedString()
 {
     return ReadQuotedString(*this, '"');
 }
 
-Token *LuaLexer::ReadNonWhitespaceToken()
+std::unique_ptr<Token> LuaLexer::ReadNonWhitespaceToken()
 {
     if (auto res = ReadAnalyzerDebugCode())
         return res;
@@ -451,7 +451,7 @@ Token *LuaLexer::ReadNonWhitespaceToken()
     return nullptr;
 }
 
-Token *LuaLexer::ReadWhitespaceToken()
+std::unique_ptr<Token> LuaLexer::ReadWhitespaceToken()
 {
     if (auto res = ReadRemainingCommentEscape())
         return res;

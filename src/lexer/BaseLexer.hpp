@@ -29,21 +29,21 @@ public:
         }
     };
 
-    Code *code;
+    std::shared_ptr<Code> code;
     size_t position = 0;
     RuntimeSyntax *runtime_syntax = new RuntimeSyntax();
     TypesystemSyntax *typesystem_syntax = new TypesystemSyntax();
 
-    virtual Token *ReadNonWhitespaceToken() = 0;
-    virtual Token *ReadWhitespaceToken() = 0;
+    virtual std::unique_ptr<Token> ReadNonWhitespaceToken() = 0;
+    virtual std::unique_ptr<Token> ReadWhitespaceToken() = 0;
 
-    Token *ReadToken();
-    Token *ReadShebang();
-    Token *ReadUnknown();
-    Token *ReadEndOfFile();
-    Token *ReadCommentEscape();
-    Token *ReadRemainingCommentEscape();
-    std::pair<std::vector<Token *>, std::vector<BaseLexer::Exception>> GetTokens();
+    std::unique_ptr<Token> ReadToken();
+    std::unique_ptr<Token> ReadShebang();
+    std::unique_ptr<Token> ReadUnknown();
+    std::unique_ptr<Token> ReadEndOfFile();
+    std::unique_ptr<Token> ReadCommentEscape();
+    std::unique_ptr<Token> ReadRemainingCommentEscape();
+    std::pair<std::vector<std::shared_ptr<Token>>, std::vector<BaseLexer::Exception>> GetTokens();
 
     std::string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);
@@ -56,5 +56,5 @@ public:
 
 private:
     bool comment_escape = false;
-    Token *ReadSingleToken();
+    std::unique_ptr<Token> ReadSingleToken();
 };

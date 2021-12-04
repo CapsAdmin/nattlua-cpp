@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <memory>
 
 class Token
 {
@@ -29,12 +30,16 @@ public:
     size_t start;
     size_t stop;
     std::string_view value;
-    std::vector<Token *> whitespace;
+    std::vector<std::unique_ptr<Token>> whitespace;
+    Token &operator=(Token &&) = default;
     inline Token(Token::Kind kind)
     {
         this->kind = kind;
     };
-    ~Token() {}
+    ~Token()
+    {
+        printf("Token::~Token()\n");
+    }
     inline bool IsWhitespace()
     {
         return kind == Token::Kind::Space ||

@@ -6,7 +6,10 @@ Code::Code(std::string_view buffer, const std::string name)
     this->name = name;
 };
 
-Code::~Code(){};
+Code::~Code()
+{
+    printf("Code::~Code()\n");
+};
 
 size_t Code::GetByteSize()
 {

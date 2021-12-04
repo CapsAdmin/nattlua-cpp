@@ -55,7 +55,7 @@ bool BaseLexer::ReadFirstFromStringArray(std::vector<std::string> strings)
     return false;
 }
 
-Token *BaseLexer::ReadCommentEscape()
+std::unique_ptr<Token> BaseLexer::ReadCommentEscape()
 {
     if (!IsString("--[[#"))
         return nullptr;
@@ -63,10 +63,10 @@ Token *BaseLexer::ReadCommentEscape()
     position += 5;
     comment_escape = true;
 
-    return new Token(Token::Kind::CommentEscape);
+    return std::make_unique<Token>(Token::Kind::CommentEscape);
 }
 
-Token *BaseLexer::ReadRemainingCommentEscape()
+std::unique_ptr<Token> BaseLexer::ReadRemainingCommentEscape()
 {
     if (!comment_escape || IsString("]]"))
         return nullptr;
@@ -74,22 +74,22 @@ Token *BaseLexer::ReadRemainingCommentEscape()
     position += 2;
     comment_escape = false;
 
-    return new Token(Token::Kind::CommentEscape);
+    return std::make_unique<Token>(Token::Kind::CommentEscape);
 }
 
-Token *BaseLexer::ReadEndOfFile()
+std::unique_ptr<Token> BaseLexer::ReadEndOfFile()
 {
     if (!TheEnd())
         return nullptr;
 
-    return new Token(Token::Kind::EndOfFile);
+    return std::make_unique<Token>(Token::Kind::EndOfFile);
 }
 
-Token *BaseLexer::ReadUnknown()
+std::unique_ptr<Token> BaseLexer::ReadUnknown()
 {
     position += 1;
 
-    return new Token(Token::Kind::Unknown);
+    return std::make_unique<Token>(Token::Kind::Unknown);
 }
 
 /*
@@ -110,7 +110,7 @@ Token *BaseLexer::ReadUnknown()
     }
 */
 
-Token *BaseLexer::ReadShebang()
+std::unique_ptr<Token> BaseLexer::ReadShebang()
 {
     if (position != 0 || !IsString("#", 0))
         return nullptr;
@@ -123,23 +123,23 @@ Token *BaseLexer::ReadShebang()
             break;
     }
 
-    return new Token(Token::Kind::Shebang);
+    return std::make_unique<Token>(Token::Kind::Shebang);
 }
 
-Token *BaseLexer::ReadSingleToken()
+std::unique_ptr<Token> BaseLexer::ReadSingleToken()
 {
     auto start = position;
 
-    Token *token;
+    std::unique_ptr<Token> token;
 
     if (auto res = ReadShebang())
-        token = res;
+        token = std::move(res);
     else if (auto res = ReadEndOfFile())
-        token = res;
+        token = std::move(res);
     else if (auto res = ReadWhitespaceToken())
-        token = res;
+        token = std::move(res);
     else if (auto res = ReadNonWhitespaceToken())
-        token = res;
+        token = std::move(res);
     else
         token = ReadUnknown();
 
@@ -149,9 +149,9 @@ Token *BaseLexer::ReadSingleToken()
     return token;
 }
 
-Token *BaseLexer::ReadToken()
+std::unique_ptr<Token> BaseLexer::ReadToken()
 {
-    auto whitespace_tokens = std::vector<Token *>();
+    auto whitespace_tokens = std::vector<std::unique_ptr<Token>>();
 
     while (true)
     {
@@ -159,7 +159,7 @@ Token *BaseLexer::ReadToken()
 
         if (token->IsWhitespace())
         {
-            whitespace_tokens.push_back(token);
+            whitespace_tokens.push_back(std::move(token));
         }
         else
         {
@@ -169,20 +169,20 @@ Token *BaseLexer::ReadToken()
             }
 
             token->value = code->GetStringSlice(token->start, token->stop);
-            token->whitespace = whitespace_tokens;
+            token->whitespace = std::move(whitespace_tokens);
 
-            whitespace_tokens.clear();
+            whitespace_tokens = std::vector<std::unique_ptr<Token>>();
 
             return token;
         }
     }
 }
 
-std::pair<std::vector<Token *>, std::vector<BaseLexer::Exception>> BaseLexer::GetTokens()
+std::pair<std::vector<std::shared_ptr<Token>>, std::vector<BaseLexer::Exception>> BaseLexer::GetTokens()
 {
     ResetState();
 
-    auto tokens = std::vector<Token *>();
+    auto tokens = std::vector<std::shared_ptr<Token>>();
     auto errors = std::vector<BaseLexer::Exception>();
 
     while (true)
@@ -190,10 +190,11 @@ std::pair<std::vector<Token *>, std::vector<BaseLexer::Exception>> BaseLexer::Ge
         try
         {
             auto token = ReadToken();
+            auto kind = token->kind;
 
-            tokens.push_back(token);
+            tokens.push_back(std::move(token));
 
-            if (token->kind == Token::Kind::EndOfFile)
+            if (kind == Token::Kind::EndOfFile)
             {
                 break;
             }

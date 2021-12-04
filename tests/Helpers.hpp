@@ -3,11 +3,11 @@
 #include "../src/lexer/LuaLexer.hpp"
 #include "../src/parser/LuaParser.hpp"
 
-inline std::vector<Token *> Tokenize(std::string_view code)
+inline std::vector<std::shared_ptr<Token>> Tokenize(std::string_view code)
 {
-    auto code_obj = new Code(code, "test");
-    LuaLexer lexer(code_obj);
-    auto [tokens, errors] = lexer.GetTokens();
+    auto code_obj = std::make_shared<Code>(code, "test");
+    auto lexer = std::make_shared<LuaLexer>(code_obj);
+    auto [tokens, errors] = lexer->GetTokens();
 
     for (auto &error : errors)
     {
@@ -17,7 +17,7 @@ inline std::vector<Token *> Tokenize(std::string_view code)
     return tokens;
 }
 
-inline Token *OneToken(std::vector<Token *> tokens)
+inline std::shared_ptr<Token> OneToken(std::vector<std::shared_ptr<Token>> tokens)
 {
     if (tokens.size() != 2)
     {
@@ -29,7 +29,7 @@ inline Token *OneToken(std::vector<Token *> tokens)
     return tokens[0];
 }
 
-inline std::string TokensToString(std::vector<Token *> tokens)
+inline std::string TokensToString(std::vector<std::shared_ptr<Token>> tokens)
 {
     std::stringstream ss;
 
@@ -46,11 +46,11 @@ inline std::string TokensToString(std::vector<Token *> tokens)
     return ss.str();
 }
 
-inline void ExpectError(std::string_view code, std::string error_message)
+inline void ExpectError(std::string_view lua_code, std::string error_message)
 {
-    auto code_obj = new Code(code, "test");
-    LuaLexer lexer(code_obj);
-    auto [tokens, errors] = lexer.GetTokens();
+    auto code = std::make_shared<Code>(lua_code, "test");
+    auto lexer = std::make_unique<LuaLexer>(code);
+    auto [tokens, errors] = lexer->GetTokens();
 
     EXPECT_TRUE(errors.size() != 0);
     EXPECT_EQ(errors[0].what(), error_message);

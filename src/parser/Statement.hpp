@@ -10,12 +10,12 @@ class StatementNode : public ParserNode
 
 class EndOfFile : public StatementNode
 {
-    Token *tk_main;
+    std::unique_ptr<Token> tk_main;
 };
 
 class AnalyzerDebugCode : public StatementNode
 {
-    Token *tk_main;
+    std::unique_ptr<Token> tk_main;
     Atomic *lua_code;
 };
 
