@@ -2,7 +2,7 @@
 
 Atomic *Atomic::Parse(std::shared_ptr<LuaParser> parser)
 {
-    if (!parser->IsTokenValue(parser->GetToken()))
+    if (!parser->IsTokenValue(parser->PeekToken()))
         return nullptr;
 
     auto node = new Atomic();
@@ -90,7 +90,7 @@ Table *Table::Parse(std::shared_ptr<LuaParser> parser)
 
         if (!parser->IsValue(",") && !parser->IsValue(";") && !parser->IsValue("}"))
         {
-            throw LuaParser::Exception("Expected something", parser->GetToken(), parser->GetToken());
+            throw LuaParser::Exception("Expected something", parser->PeekToken(), parser->PeekToken());
         }
 
         if (!parser->IsValue("}"))
@@ -108,7 +108,7 @@ Table *Table::Parse(std::shared_ptr<LuaParser> parser)
 
 PrefixOperator *PrefixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
-    if (!parser->runtime_syntax->IsPrefixOperator(parser->GetToken()->value))
+    if (!parser->runtime_syntax->IsPrefixOperator(parser->PeekToken()->value))
         return nullptr;
 
     auto node = new PrefixOperator();
@@ -121,7 +121,7 @@ PrefixOperator *PrefixOperator::Parse(std::shared_ptr<LuaParser> parser)
 
 BinaryOperator *BinaryOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
-    if (!parser->runtime_syntax->IsBinaryOperator(parser->GetToken()->value))
+    if (!parser->runtime_syntax->IsBinaryOperator(parser->PeekToken()->value))
         return nullptr;
 
     auto node = new BinaryOperator();
@@ -143,7 +143,7 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
 
         if (!node)
         {
-            throw LuaParser::Exception("Empty parentheses group", parser->GetToken(), parser->GetToken());
+            throw LuaParser::Exception("Empty parentheses group", parser->PeekToken(), parser->PeekToken());
         }
 
         node->tk_left_parenthesis.push_back(std::move(left_paren)); // TODO: unshift
@@ -205,7 +205,7 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
 
     while (node)
     {
-        auto info = parser->runtime_syntax->GetBinaryOperatorInfo(parser->GetToken()->value);
+        auto info = parser->runtime_syntax->GetBinaryOperatorInfo(parser->PeekToken()->value);
         if (!info || info->left_priority < priority)
             break;
 
@@ -221,7 +221,7 @@ Expression *ValueExpression::Parse(std::shared_ptr<LuaParser> parser, size_t pri
 
         if (!binary->right)
         {
-            auto token = parser->GetToken();
+            auto token = parser->PeekToken();
             throw LuaParser::Exception(
                 "expected right side to be an expression, got $1",
                 token,
@@ -303,7 +303,7 @@ ValueExpression::Call *ValueExpression::Call::Parse(std::shared_ptr<LuaParser> p
 
 ValueExpression::PostfixOperator *ValueExpression::PostfixOperator::Parse(std::shared_ptr<LuaParser> parser)
 {
-    if (!parser->runtime_syntax->IsPostfixOperator(parser->GetToken()->value))
+    if (!parser->runtime_syntax->IsPostfixOperator(parser->PeekToken()->value))
         return nullptr;
 
     auto node = new PostfixOperator();

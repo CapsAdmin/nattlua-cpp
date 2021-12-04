@@ -12,11 +12,11 @@ public:
     {
     private:
         std::string message;
-        std::shared_ptr<Token> start;
-        std::shared_ptr<Token> stop;
+        Token *start;
+        Token *stop;
 
     public:
-        explicit Exception(const std::string &message, std::shared_ptr<Token> start_token, std::shared_ptr<Token> stop_token)
+        explicit Exception(const std::string &message, Token *start_token, Token *stop_token)
         {
             this->message = message;
 
@@ -30,12 +30,12 @@ public:
         }
     };
 
-    std::vector<std::shared_ptr<Token>> tokens;
+    std::vector<std::unique_ptr<Token>> tokens;
     size_t index = 0;
     RuntimeSyntax *runtime_syntax = new RuntimeSyntax();
     TypesystemSyntax *typesystem_syntax = new TypesystemSyntax();
 
-    LuaParser(std::vector<std::shared_ptr<Token>> tokens);
+    LuaParser(std::vector<std::unique_ptr<Token>> tokens);
     ~LuaParser()
     {
         delete runtime_syntax;
@@ -50,19 +50,19 @@ public:
         BinaryOperator,
         None,
     };
-    TokenType GetTokenType(std::shared_ptr<Token> token);
+    TokenType GetTokenType(Token *token);
+    bool IsTokenValue(Token *token);
 
-    bool IsTokenValue(std::shared_ptr<Token> token);
     bool IsValue(const std::string &val, const uint8_t offset = 0);
     bool IsType(const Token::Kind val, const uint8_t offset = 0);
-    std::shared_ptr<Token> ExpectValue(const std::string &val);
-    std::shared_ptr<Token> ExpectType(const Token::Kind val);
+    std::unique_ptr<Token> ExpectValue(const std::string &val);
+    std::unique_ptr<Token> ExpectType(const Token::Kind val);
 
     template <class T>
     inline std::vector<T *> ReadMultipleValues(
         const size_t max,
         std::function<T *()> reader,
-        std::vector<std::shared_ptr<Token>> &comma_tokens)
+        std::vector<std::unique_ptr<Token>> &comma_tokens)
     {
         std::vector<T *> out;
 
@@ -83,8 +83,8 @@ public:
     };
 
     bool IsCallExpression(const uint8_t offset = 0);
-    std::shared_ptr<Token> ReadToken() { return std::move(tokens[index++]); };
-    std::shared_ptr<Token> GetToken(size_t offset = 0) { return std::move(tokens[index + offset]); };
+    std::unique_ptr<Token> ReadToken() { return std::move(tokens[index++]); };
+    Token *PeekToken(size_t offset = 0) { return tokens[index + offset].get(); };
     void StartNode(ParserNode *node){};
     void EndNode(ParserNode *node){};
     inline size_t GetLength() { return tokens.size(); }

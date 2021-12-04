@@ -15,7 +15,7 @@ template <class T>
 auto Parse(const std::string &code)
 {
     auto tokens = Tokenize(code);
-    auto parser = std::make_shared<LuaParser>(tokens);
+    auto parser = std::make_shared<LuaParser>(std::move(tokens));
     auto node = cast<T>(ValueExpression::Parse(parser));
     auto table = cast<Table>(node);
     return node;

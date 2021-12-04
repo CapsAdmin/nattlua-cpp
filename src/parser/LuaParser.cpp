@@ -1,6 +1,6 @@
 #include "./LuaParser.hpp"
 
-bool LuaParser::IsTokenValue(std::shared_ptr<Token> token)
+bool LuaParser::IsTokenValue(Token *token)
 {
     if (token->kind == Token::Kind::Number || token->kind == Token::Kind::String)
         return true;
@@ -13,7 +13,7 @@ bool LuaParser::IsTokenValue(std::shared_ptr<Token> token)
     return false;
 }
 
-LuaParser::TokenType LuaParser::GetTokenType(std::shared_ptr<Token> token)
+LuaParser::TokenType LuaParser::GetTokenType(Token *token)
 {
     if (token->kind == Token::Kind::Letter && runtime_syntax->IsKeyword(token->value))
     {
@@ -32,33 +32,33 @@ LuaParser::TokenType LuaParser::GetTokenType(std::shared_ptr<Token> token)
     return TokenType::None;
 }
 
-LuaParser::LuaParser(std::vector<std::shared_ptr<Token>> tokens)
+LuaParser::LuaParser(std::vector<std::unique_ptr<Token>> tokens)
 {
     this->tokens = std::move(tokens);
 }
 
 bool LuaParser::IsValue(const std::string &val, const uint8_t offset)
 {
-    return GetToken(offset)->value == val;
+    return PeekToken(offset)->value == val;
 }
 
 bool LuaParser::IsType(const Token::Kind val, const uint8_t offset)
 {
-    return GetToken(offset)->kind == val;
+    return PeekToken(offset)->kind == val;
 }
 
-std::shared_ptr<Token> LuaParser::ExpectValue(const std::string &val)
+std::unique_ptr<Token> LuaParser::ExpectValue(const std::string &val)
 {
     if (!IsValue(val))
-        throw Exception("Expected value: " + val, GetToken(), GetToken());
+        throw Exception("Expected value: " + val, PeekToken(), PeekToken());
 
     return ReadToken();
 }
 
-std::shared_ptr<Token> LuaParser::ExpectType(const Token::Kind val)
+std::unique_ptr<Token> LuaParser::ExpectType(const Token::Kind val)
 {
     if (!IsType(val))
-        throw Exception("Expected something", GetToken(), GetToken());
+        throw Exception("Expected something", PeekToken(), PeekToken());
 
     return ReadToken();
 }

@@ -178,11 +178,11 @@ std::unique_ptr<Token> BaseLexer::ReadToken()
     }
 }
 
-std::pair<std::vector<std::shared_ptr<Token>>, std::vector<BaseLexer::Exception>> BaseLexer::GetTokens()
+std::pair<std::vector<std::unique_ptr<Token>>, std::vector<BaseLexer::Exception>> BaseLexer::GetTokens()
 {
     ResetState();
 
-    auto tokens = std::vector<std::shared_ptr<Token>>();
+    auto tokens = std::vector<std::unique_ptr<Token>>();
     auto errors = std::vector<BaseLexer::Exception>();
 
     while (true)
@@ -205,5 +205,5 @@ std::pair<std::vector<std::shared_ptr<Token>>, std::vector<BaseLexer::Exception>
         }
     }
 
-    return make_pair(tokens, errors);
+    return make_pair(std::move(tokens), errors);
 }

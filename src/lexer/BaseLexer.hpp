@@ -43,7 +43,7 @@ public:
     std::unique_ptr<Token> ReadEndOfFile();
     std::unique_ptr<Token> ReadCommentEscape();
     std::unique_ptr<Token> ReadRemainingCommentEscape();
-    std::pair<std::vector<std::shared_ptr<Token>>, std::vector<BaseLexer::Exception>> GetTokens();
+    std::pair<std::vector<std::unique_ptr<Token>>, std::vector<BaseLexer::Exception>> GetTokens();
 
     std::string_view GetRelativeStringSlice(size_t start, size_t stop);
     uint8_t GetByte(size_t offset = 0);
