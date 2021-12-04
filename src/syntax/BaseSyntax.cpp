@@ -32,18 +32,18 @@ void BaseSyntax::AddBinaryOperators(std::vector<std::vector<std::string>> groups
                 std::string op_ = std::string(op).substr(1);
 
                 binary_operator_info.insert(make_pair(op_, new BinaryOperatorInfo{
-                    left_priority : static_cast<uint8_t>(priority + 1),
-                    right_priority : priority,
-                }));
+                                                               .left_priority = static_cast<uint8_t>(priority + 1),
+                                                               .right_priority = priority,
+                                                           }));
 
                 AddSymbols({op_});
             }
             else
             {
                 binary_operator_info.insert(make_pair(op, new BinaryOperatorInfo{
-                    left_priority : priority,
-                    right_priority : priority,
-                }));
+                                                              .left_priority = priority,
+                                                              .right_priority = priority,
+                                                          }));
 
                 AddSymbols({op});
             }

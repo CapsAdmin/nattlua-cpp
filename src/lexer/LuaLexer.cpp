@@ -1,5 +1,6 @@
 #include "./LuaLexer.hpp"
 #include "../syntax/CharacterClasses.hpp"
+#include <sstream>
 
 std::unique_ptr<Token> LuaLexer::ReadSpace()
 {

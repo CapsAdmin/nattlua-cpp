@@ -16,8 +16,8 @@ set(TEST_CPP
 
 set(TEST_ARGS
     "-O0"
-    "-fprofile-arcs"
-    "-ftest-coverage"
+    #"-fprofile-arcs"
+    #"-ftest-coverage"
 )
 
 project(main LANGUAGES CXX)
@@ -32,7 +32,7 @@ project(main LANGUAGES CXX)
         include(FetchContent)
         FetchContent_Declare(
             googletest
-            URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+            URL https://github.com/google/googletest/archive/3e0e32ba300ce8afe695ad3ba7e81b21b7cf237a.zip
         )
         FetchContent_MakeAvailable(googletest)
 
@@ -42,7 +42,12 @@ project(main LANGUAGES CXX)
         enable_testing()
 
         add_executable(tests ${TEST_CPP} ${LIBRARY_CPP})
-        target_link_libraries(tests gtest_main gcov)
+        target_link_libraries(tests gtest_main)
+        
+        if (!APPLE)
+        #    target_link_libraries(tests gcov)
+        endif (!APPLE)
+
         target_compile_options(tests PUBLIC ${TEST_ARGS})
 
         include(GoogleTest)
