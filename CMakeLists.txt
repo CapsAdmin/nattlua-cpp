@@ -15,6 +15,7 @@ set(TEST_CPP
     tests/Analyzer.cpp
 )
 
+set(COMPILER_ARGS "-fconcepts")
 set(TEST_ARGS "-O0")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -30,6 +31,9 @@ project(main LANGUAGES CXX)
     add_executable(main src/main.cpp)
     
     add_library(lib ${LIBRARY_CPP})
+    target_compile_options(lib PUBLIC ${COMPILER_ARGS})
+
+    target_compile_options(main PUBLIC ${COMPILER_ARGS})
     target_link_libraries(main lib)
 
     #google test
@@ -52,7 +56,7 @@ project(main LANGUAGES CXX)
             target_link_libraries(tests gcov)
         endif ()
 
-        target_compile_options(tests PUBLIC ${TEST_ARGS})
+        target_compile_options(tests PUBLIC ${TEST_ARGS} ${COMPILER_ARGS})
 
         include(GoogleTest)
         gtest_discover_tests(tests)

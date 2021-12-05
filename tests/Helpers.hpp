@@ -2,6 +2,31 @@
 
 #include "../src/lexer/LuaLexer.hpp"
 #include "../src/parser/LuaParser.hpp"
+#include "../src/parser/PrimaryExpression.hpp"
+
+template <typename From, typename To>
+inline std::unique_ptr<To> cast_uptr(std::unique_ptr<From> &&ptr)
+{
+    auto const stored_ptr = ptr.release();
+    To *const converted_stored_ptr = dynamic_cast<To *>(stored_ptr);
+    if (converted_stored_ptr)
+    {
+        return std::unique_ptr<To>(converted_stored_ptr);
+    }
+    else
+    {
+        ptr.reset(stored_ptr);
+        return std::unique_ptr<To>();
+    }
+}
+
+template <class T>
+inline auto cast(auto node)
+{
+    auto val = dynamic_cast<T *>(node);
+    EXPECT_TRUE(val != nullptr);
+    return val;
+}
 
 inline std::vector<std::unique_ptr<Token>> Tokenize(std::string_view code)
 {
@@ -62,4 +87,12 @@ inline void Check(std::string_view lua_code)
     auto actual_tokens = TokensToString(std::move(tokens));
 
     EXPECT_EQ(actual_tokens, lua_code);
+}
+
+inline auto Parse(std::string_view code)
+{
+    auto tokens = Tokenize(code);
+    auto parser = std::make_shared<LuaParser>(std::move(tokens));
+    auto node = cast_uptr<Expression, ParserNode>(std::move(ValueExpression::Parse(parser)));
+    return std::move(node);
 }

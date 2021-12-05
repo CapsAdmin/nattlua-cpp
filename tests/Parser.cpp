@@ -3,41 +3,9 @@
 #include "./Helpers.hpp"
 #include "../src/parser/PrimaryExpression.hpp"
 
-template <typename T>
-inline std::unique_ptr<T> cast_uptr(std::unique_ptr<ParserNode> &&ptr)
-{
-    ParserNode *const stored_ptr = ptr.release();
-    T *const converted_stored_ptr = dynamic_cast<T *>(stored_ptr);
-    if (converted_stored_ptr)
-    {
-        return std::unique_ptr<T>(converted_stored_ptr);
-    }
-    else
-    {
-        ptr.reset(stored_ptr);
-        return std::unique_ptr<T>();
-    }
-}
-
-template <class T>
-auto cast(ParserNode *node)
-{
-    auto val = dynamic_cast<T *>(node);
-    EXPECT_TRUE(val != nullptr);
-    return val;
-}
-
-auto Parse(std::string_view code)
-{
-    auto tokens = Tokenize(code);
-    auto parser = std::make_shared<LuaParser>(std::move(tokens));
-    auto node = cast_uptr<ParserNode>(std::move(ValueExpression::Parse(parser)));
-    return std::move(node);
-}
-
 TEST(Parser, EmptyTable)
 {
-    auto table = cast_uptr<Table>(Parse("{}"));
+    auto table = cast_uptr<ParserNode, Table>(Parse("{}"));
 
     EXPECT_EQ(table->tk_left_bracket->value, "{");
     EXPECT_EQ(table->tk_right_bracket->value, "}");
@@ -45,7 +13,7 @@ TEST(Parser, EmptyTable)
 
 TEST(Parser, TableWithIndexValues)
 {
-    auto table = cast_uptr<Table>(Parse("{1, 2, 3}"));
+    auto table = cast_uptr<ParserNode, Table>(Parse("{1, 2, 3}"));
 
     EXPECT_EQ(table->children.size(), 3);
     EXPECT_EQ(table->tk_separators.size(), 2);
@@ -63,7 +31,7 @@ TEST(Parser, TableWithIndexValues)
 
 TEST(Parser, TableWithIndexExpressions)
 {
-    auto table = cast_uptr<Table>(Parse("{[1337] = 1, [\"foo\"] = 2, [foo] = 3}"));
+    auto table = cast_uptr<ParserNode, Table>(Parse("{[1337] = 1, [\"foo\"] = 2, [foo] = 3}"));
 
     EXPECT_EQ(table->children.size(), 3);
     EXPECT_EQ(table->tk_separators.size(), 2);
@@ -96,7 +64,7 @@ TEST(Parser, TableWithIndexExpressions)
 
 TEST(Parser, BinaryOperator)
 {
-    auto binary = cast_uptr<BinaryOperator>(Parse("1 + 2"));
+    auto binary = cast_uptr<ParserNode, BinaryOperator>(Parse("1 + 2"));
 
     auto left = cast<Atomic>(binary->left.get());
     auto right = cast<Atomic>(binary->right.get());
@@ -108,7 +76,7 @@ TEST(Parser, BinaryOperator)
 
 TEST(Parser, Parenthesis)
 {
-    auto binary = cast_uptr<BinaryOperator>(Parse("1 + (5*2)"));
+    auto binary = cast_uptr<ParserNode, BinaryOperator>(Parse("1 + (5*2)"));
 
     auto left = cast<Atomic>(binary->left.get());
     auto right = cast<BinaryOperator>(binary->right.get());
@@ -124,7 +92,7 @@ TEST(Parser, Parenthesis)
 
 TEST(Parser, Call)
 {
-    auto call = cast_uptr<ValueExpression::Call>(Parse("print(1, 2, 3)"));
+    auto call = cast_uptr<ParserNode, ValueExpression::Call>(Parse("print(1, 2, 3)"));
 
     EXPECT_EQ(call->arguments.size(), 3);
     EXPECT_EQ(call->tk_comma.size(), 2);
@@ -140,7 +108,7 @@ TEST(Parser, Call)
 }
 TEST(Parser, ChainedCalls)
 {
-    auto call_3 = cast_uptr<ValueExpression::Call>(Parse("foo(1)(2)(3)"));
+    auto call_3 = cast_uptr<ParserNode, ValueExpression::Call>(Parse("foo(1)(2)(3)"));
 
     auto call_2 = cast<ValueExpression::Call>(call_3->left.get());
     auto call_1 = cast<ValueExpression::Call>(call_2->left.get());
@@ -152,7 +120,7 @@ TEST(Parser, ChainedCalls)
 
 TEST(Parser, CallParenthesis)
 {
-    auto call = cast_uptr<ValueExpression::Call>(Parse("((print(1)))"));
+    auto call = cast_uptr<ParserNode, ValueExpression::Call>(Parse("((print(1)))"));
 
     EXPECT_EQ(call->arguments.size(), 1);
     EXPECT_EQ(call->tk_comma.size(), 0);
@@ -167,7 +135,7 @@ TEST(Parser, CallParenthesis)
 
 TEST(Parser, SelfCall)
 {
-    auto call = cast_uptr<ValueExpression::Call>(Parse("self:print(1, 2, 3)"));
+    auto call = cast_uptr<ParserNode, ValueExpression::Call>(Parse("self:print(1, 2, 3)"));
 
     auto self = cast<ValueExpression::SelfCall>(call->left.get());
 
@@ -181,7 +149,7 @@ TEST(Parser, SelfCall)
 
 TEST(Parser, IndexExpression)
 {
-    auto index = cast_uptr<ValueExpression::IndexExpression>(Parse("a[1]"));
+    auto index = cast_uptr<ParserNode, ValueExpression::IndexExpression>(Parse("a[1]"));
 
     EXPECT_EQ(index->tk_left_bracket->value, "[");
     EXPECT_EQ(index->tk_right_bracket->value, "]");
@@ -190,7 +158,7 @@ TEST(Parser, IndexExpression)
 
 TEST(Parser, TypeCast)
 {
-    auto type_cast = cast_uptr<ValueExpression::TypeCast>(Parse("\"foo\" as foo"));
+    auto type_cast = cast_uptr<ParserNode, ValueExpression::TypeCast>(Parse("\"foo\" as foo"));
 
     EXPECT_EQ(type_cast->tk_operator->value, "as");
 
@@ -200,7 +168,7 @@ TEST(Parser, TypeCast)
 
 TEST(Parser, PrefixOperator)
 {
-    auto prefix = cast_uptr<PrefixOperator>(Parse("-1"));
+    auto prefix = cast_uptr<ParserNode, PrefixOperator>(Parse("-1"));
 
     EXPECT_EQ(prefix->op->value, "-");
     EXPECT_EQ(cast<Atomic>(prefix->right.get())->value->value, "1");
@@ -208,7 +176,7 @@ TEST(Parser, PrefixOperator)
 
 TEST(Parser, Function)
 {
-    auto node = cast_uptr<Function>(Parse("function(a,b,c) end"));
+    auto node = cast_uptr<ParserNode, Function>(Parse("function(a,b,c) end"));
 
     EXPECT_EQ(node->tk_function->value, "function");
     EXPECT_EQ(node->tk_arguments_left->value, "(");
